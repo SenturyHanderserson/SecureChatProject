@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(-45deg, #0f0f0f, #1a2e1a, #0f0f0f, #1a2e1a);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+        
+        .message-enter {
+            animation: messageEnter 0.3s ease-out;
+        }
+        
+        @keyframes messageEnter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .channel-hover:hover {
+            background-color: rgba(46, 204, 113, 0.1);
+            transform: translateX(5px);
+            transition: all 0.2s ease;
+        }
+        
+        .role-admin { color: #e74c3c; }
+        .role-moderator { color: #3498db; }
+        .role-member { color: #2ecc71; }
+        .role-guest { color: #95a5a6; }
+        
+        .pinned-message {
+            border-left: 3px solid #f1c40f;
+            background-color: rgba(241, 196, 15, 0.05);
+        }
+        
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sidebar::-webkit-scrollbar-track {
+            background: #0f0f0f;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #2ecc71;
+            border-radius: 6px;
+        }
+        
+        .modal {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg text-white min-h-screen flex overflow-hidden">
+    <!-- Login/Signup Modal -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div class="modal bg-gray-900 rounded-lg p-8 w-full max-w-md border border-green-700">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-green-400" id="authTitle">Login</h2>
+                <button id="toggleAuth" class="text-green-400 hover:text-green-300">Switch to Signup</button>
+            </div>
+            
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label for="loginUsername" class="block text-gray-300 mb-2">Username</label>
+                    <input type="text" id="loginUsername" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                </div>
+                <div class="mb-6">
+                    <label for="loginPassword" class="block text-gray-300 mb-2">Password</label>
+                    <input type="password" id="loginPassword" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition duration-300">Login</button>
+            </form>
+            
+            <form id="signupForm" class="hidden">
+                <div class="mb-4">
+                    <label for="signupUsername" class="block text-gray-300 mb-2">Username</label>
+                    <input type="text" id="signupUsername" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                </div>
+                <div class="mb-4">
+                    <label for="signupEmail" class="block text-gray-300 mb-2">Email</label>
+                    <input type="email" id="signupEmail" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                </div>
+                <div class="mb-6">
+                    <label for="signupPassword" class="block text-gray-300 mb-2">Password</label>
+                    <input type="password" id="signupPassword" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition duration-300">Sign Up</button>
+            </form>
+            
+            <div id="authError" class="mt-4 text-red-400 hidden"></div>
+        </div>
+    </div>
+
+    <!-- Main App (hidden until authenticated) -->
+    <div id="appContainer" class="hidden w-full flex">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col h-screen">
+            <div class="p-4 border-b border-gray-800 flex items-center">
+                <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center mr-3">
+                    <i class="fas fa-code text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold text-green-400">Secure Chat</h1>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto sidebar">
+                <!-- Server Channels -->
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-gray-400 uppercase text-xs font-bold">Channels</h3>
+                        <button id="createChannelBtn" class="text-gray-400 hover:text-green-400" title="Create Channel">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <ul id="channelList">
+                        <!-- Channels will be populated here -->
+                    </ul>
+                </div>
+                
+                <!-- Online Users -->
+                <div class="p-4 border-t border-gray-800">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-gray-400 uppercase text-xs font-bold">Online Members</h3>
+                        <span id="onlineCount" class="text-gray-400">0</span>
+                    </div>
+                    
+                    <ul id="userList">
+                        <!-- Users will be populated here -->
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- User Profile -->
+            <div class="p-4 border-t border-gray-800 bg-gray-900">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div id="currentUsername" class="font-medium text-green-400">Guest</div>
+                        <div id="currentUserRole" class="text-xs text-gray-400">Not logged in</div>
+                    </div>
+                    <button id="logoutBtn" class="text-gray-400 hover:text-green-400" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="flex-1 flex flex-col h-screen">
+            <!-- Channel Header -->
+            <div class="p-4 border-b border-gray-800 bg-gray-900 flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-hashtag text-gray-500 mr-2"></i>
+                    <h2 id="currentChannel" class="text-xl font-bold text-green-400">general</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="pinnedMessagesBtn" class="text-gray-400 hover:text-green-400" title="Pinned Messages">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                    <button id="membersBtn" class="text-gray-400 hover:text-green-400" title="Members">
+                        <i class="fas fa-users"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 bg-gray-900">
+                <div class="max-w-3xl mx-auto">
+                    <!-- Welcome Message -->
+                    <div class="message-enter mb-8 text-center">
+                        <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
+                            <i class="fas fa-code text-3xl text-green-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to Secure Chat!</h3>
+                        <p class="text-gray-400">This is the start of the <span class="text-green-400">#general</span> channel.</p>
+                    </div>
+                    
+                    <!-- Messages will be loaded here -->
+                    <div id="messageList">
+                        <!-- Messages will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Message Input -->
+            <div class="p-4 border-t border-gray-800 bg-gray-900">
+                <div class="max-w-3xl mx-auto">
+                    <div id="replyIndicator" class="hidden mb-2 bg-gray-800 p-2 rounded text-sm text-gray-400">
+                        <div class="flex justify-between items-center">
+                            <span>Replying to <span id="replyToUser" class="text-green-400">User</span></span>
+                            <button id="cancelReply" class="text-gray-500 hover:text-gray-300">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <p id="replyPreview" class="truncate text-xs mt-1">Message preview...</p>
+                    </div>
+                    
+                    <div class="relative">
+                        <textarea id="messageInput" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-green-500 focus:outline-none resize-none" rows="1" placeholder="Message #general" disabled></textarea>
+                        <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+                            <button class="text-gray-400 hover:text-green-400" title="Attach File">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar (Members) -->
+        <div id="membersSidebar" class="w-60 bg-gray-900 border-l border-gray-800 hidden">
+            <div class="p-4 border-b border-gray-800">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-green-400">Members</h3>
+                    <button id="closeMembersBtn" class="text-gray-400 hover:text-green-400">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <input type="text" placeholder="Search members" class="w-full mt-3 bg-gray-800 border border-gray-700 rounded px-3 py-1 text-sm text-white focus:border-green-500 focus:outline-none">
+            </div>
+            
+            <div class="p-2 overflow-y-auto h-full">
+                <div class="mb-4">
+                    <h4 class="text-xs text-gray-400 uppercase font-bold mb-2 px-2">Online — <span id="onlineCountSidebar">0</span></h4>
+                    <ul id="onlineMembersList">
+                        <!-- Online members will be populated here -->
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-xs text-gray-400 uppercase font-bold mb-2 px-2">Offline — <span id="offlineCountSidebar">0</span></h4>
+                    <ul id="offlineMembersList">
+                        <!-- Offline members will be populated here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pinned Messages Modal -->
+        <div id="pinnedMessagesModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+            <div class="modal bg-gray-900 rounded-lg p-6 w-full max-w-2xl h-3/4 border border-green-700 flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-green-400">Pinned Messages</h3>
+                    <button id="closePinnedModal" class="text-gray-400 hover:text-green-400">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="pinnedMessagesList" class="flex-1 overflow-y-auto">
+                    <!-- Pinned messages will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Channel Modal -->
+        <div id="createChannelModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+            <div class="modal bg-gray-900 rounded-lg p-6 w-full max-w-md border border-green-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-green-400">Create Channel</h3>
+                    <button id="closeCreateChannelModal" class="text-gray-400 hover:text-green-400">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="createChannelForm">
+                    <div class="mb-4">
+                        <label for="channelName" class="block text-gray-300 mb-2">Channel Name</label>
+                        <div class="flex">
+                            <span class="flex items-center bg-gray-800 border border-r-0 border-gray-700 rounded-l px-3 text-gray-400">#</span>
+                            <input type="text" id="channelName" class="flex-1 bg-gray-800 border border-gray-700 rounded-r px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="channelDescription" class="block text-gray-300 mb-2">Description (optional)</label>
+                        <textarea id="channelDescription" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" rows="2"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition duration-300">Create Channel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current user state
+        let currentUser = {
+            username: null,
+            role: 'guest',
+            token: null
+        };
+        
+        let currentChannel = 'general';
+        let replyToMessage = null;
+        let lastMessageTime = 0;
+        
+        // Local storage for messages and channels
+        let messages = {};
+        let channels = ['general', 'announcements', 'hacking', 'projects', 'off-topic'];
+        let users = [
+            { username: 'Admin', role: 'admin', online: true },
+            { username: 'Moderator', role: 'moderator', online: true },
+            { username: 'Member', role: 'member', online: true }
+        ];
+        
+        // Roles
+        const roles = {
+            'admin': { name: 'Admin', color: 'role-admin' },
+            'moderator': { name: 'Moderator', color: 'role-moderator' },
+            'member': { name: 'Member', color: 'role-member' },
+            'guest': { name: 'Guest', color: 'role-guest' }
+        };
+        
+        // DOM Elements
+        const authModal = document.getElementById('authModal');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const toggleAuth = document.getElementById('toggleAuth');
+        const authTitle = document.getElementById('authTitle');
+        const authError = document.getElementById('authError');
+        const currentUsername = document.getElementById('currentUsername');
+        const currentUserRole = document.getElementById('currentUserRole');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const messageInput = document.getElementById('messageInput');
+        const messageList = document.getElementById('messageList');
+        const channelList = document.getElementById('channelList');
+        const userList = document.getElementById('userList');
+        const onlineCount = document.getElementById('onlineCount');
+        const currentChannelDisplay = document.getElementById('currentChannel');
+        const membersSidebar = document.getElementById('membersSidebar');
+        const membersBtn = document.getElementById('membersBtn');
+        const closeMembersBtn = document.getElementById('closeMembersBtn');
+        const pinnedMessagesBtn = document.getElementById('pinnedMessagesBtn');
+        const pinnedMessagesModal = document.getElementById('pinnedMessagesModal');
+        const closePinnedModal = document.getElementById('closePinnedModal');
+        const replyIndicator = document.getElementById('replyIndicator');
+        const replyToUser = document.getElementById('replyToUser');
+        const replyPreview = document.getElementById('replyPreview');
+        const cancelReply = document.getElementById('cancelReply');
+        const createChannelBtn = document.getElementById('createChannelBtn');
+        const createChannelModal = document.getElementById('createChannelModal');
+        const closeCreateChannelModal = document.getElementById('closeCreateChannelModal');
+        const createChannelForm = document.getElementById('createChannelForm');
+        
+        // Event Listeners
+        toggleAuth.addEventListener('click', toggleAuthForms);
+        loginForm.addEventListener('submit', handleLogin);
+        signupForm.addEventListener('submit', handleSignup);
+        logoutBtn.addEventListener('click', handleLogout);
+        messageInput.addEventListener('keydown', handleMessageInput);
+        membersBtn.addEventListener('click', toggleMembersSidebar);
+        closeMembersBtn.addEventListener('click', toggleMembersSidebar);
+        pinnedMessagesBtn.addEventListener('click', showPinnedMessages);
+        closePinnedModal.addEventListener('click', hidePinnedMessages);
+        cancelReply.addEventListener('click', cancelMessageReply);
+        createChannelBtn.addEventListener('click', showCreateChannelModal);
+        closeCreateChannelModal.addEventListener('click', hideCreateChannelModal);
+        createChannelForm.addEventListener('submit', handleCreateChannel);
+        
+        // Initialize the app
+        initApp();
+        
+        function initApp() {
+            // Check localStorage for existing session
+            const savedUser = localStorage.getItem('chatUser');
+            
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    authModal.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    updateUserDisplay();
+                    loadChannels();
+                    loadUsers();
+                    loadMessagesForChannel();
+                    messageInput.disabled = false;
+                } catch (e) {
+                    localStorage.removeItem('chatUser');
+                }
+            }
+            
+            // Initialize empty messages for each channel
+            channels.forEach(channel => {
+                if (!messages[channel]) {
+                    messages[channel] = [];
+                }
+            });
+        }
+        
+        function toggleAuthForms(e) {
+            e.preventDefault();
+            if (loginForm.classList.contains('hidden')) {
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                authTitle.textContent = 'Login';
+                toggleAuth.textContent = 'Switch to Signup';
+            } else {
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                authTitle.textContent = 'Sign Up';
+                toggleAuth.textContent = 'Switch to Login';
+            }
+            authError.classList.add('hidden');
+        }
+        
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Simple validation
+            if (!username || !password) {
+                authError.textContent = 'Please enter both username and password';
+                authError.classList.remove('hidden');
+                return;
+            }
+            
+            // In a real app, this would be an API call to your backend
+            // For local mode, we'll just create a user session
+            currentUser = {
+                username: username,
+                role: username.toLowerCase() === 'admin' ? 'admin' : 'member',
+                token: 'local-' + Date.now()
+            };
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('chatUser', JSON.stringify(currentUser));
+            
+            successfulLogin();
+        }
+        
+        function handleSignup(e) {
+            e.preventDefault();
+            const username = document.getElementById('signupUsername').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!username || !email || !password) {
+                authError.textContent = 'Please fill in all fields';
+                authError.classList.remove('hidden');
+                return;
+            }
+            
+            currentUser = {
+                username: username,
+                role: 'member',
+                email: email,
+                token: 'local-' + Date.now()
+            };
+            
+            // Add to users list
+            users.push({
+                username: username,
+                role: 'member',
+                online: true
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('chatUser', JSON.stringify(currentUser));
+            
+            successfulLogin();
+        }
+        
+        function successfulLogin() {
+            authModal.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            updateUserDisplay();
+            loadChannels();
+            loadUsers();
+            loadMessagesForChannel();
+            messageInput.disabled = false;
+            
+            // Clear forms
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('signupUsername').value = '';
+            document.getElementById('signupEmail').value = '';
+            document.getElementById('signupPassword').value = '';
+            authError.classList.add('hidden');
+        }
+        
+        function handleLogout() {
+            currentUser = {
+                username: null,
+                role: 'guest',
+                token: null
+            };
+            
+            localStorage.removeItem('chatUser');
+            
+            appContainer.classList.add('hidden');
+            authModal.classList.remove('hidden');
+            messageList.innerHTML = '';
+            channelList.innerHTML = '';
+            userList.innerHTML = '';
+            messageInput.disabled = true;
+        }
+        
+        function updateUserDisplay() {
+            if (currentUser.username) {
+                currentUsername.textContent = currentUser.username;
+                currentUsername.className = 'font-medium ' + roles[currentUser.role].color;
+                currentUserRole.textContent = roles[currentUser.role].name;
+            } else {
+                currentUsername.textContent = 'Guest';
+                currentUsername.className = 'font-medium text-gray-400';
+                currentUserRole.textContent = 'Not logged in';
+            }
+        }
+        
+        function loadChannels() {
+            channelList.innerHTML = '';
+            
+            channels.forEach(channel => {
+                const channelItem = document.createElement('li');
+                channelItem.className = 'channel-item mb-1';
+                channelItem.dataset.channel = channel;
+                
+                const channelLink = document.createElement('a');
+                channelLink.href = '#';
+                channelLink.className = 'flex items-center py-1 px-2 rounded channel-hover text-gray-300 hover:text-white';
+                
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-hashtag mr-2 text-gray-500';
+                
+                const channelName = document.createElement('span');
+                channelName.textContent = channel;
+                
+                channelLink.appendChild(icon);
+                channelLink.appendChild(channelName);
+                channelItem.appendChild(channelLink);
+                channelList.appendChild(channelItem);
+                
+                // Add click event to change channel
+                channelLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentChannel = channel;
+                    currentChannelDisplay.textContent = channel;
+                    highlightCurrentChannel();
+                    loadMessagesForChannel();
+                });
+            });
+            
+            // Highlight current channel
+            highlightCurrentChannel();
+        }
+        
+        function highlightCurrentChannel() {
+            const channels = document.querySelectorAll('.channel-item');
+            channels.forEach(channel => {
+                if (channel.dataset.channel === currentChannel) {
+                    channel.querySelector('a').classList.add('bg-gray-800', 'text-white');
+                } else {
+                    channel.querySelector('a').classList.remove('bg-gray-800', 'text-white');
+                }
+            });
+        }
+        
+        function loadUsers() {
+            userList.innerHTML = '';
+            
+            // Count online users
+            const onlineUsers = users.filter(user => user.online);
+            onlineCount.textContent = onlineUsers.length;
+            
+            // Display users
+            users.forEach(user => {
+                const userItem = document.createElement('li');
+                userItem.className = 'user-item mb-1';
+                
+                const userDiv = document.createElement('div');
+                userDiv.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800';
+                
+                const statusDot = document.createElement('div');
+                statusDot.className = `w-3 h-3 rounded-full mr-2 ${user.online ? 'bg-green-500' : 'bg-gray-500'}`;
+                
+                const usernameSpan = document.createElement('span');
+                usernameSpan.className = roles[user.role].color;
+                usernameSpan.textContent = user.username;
+                
+                userDiv.appendChild(statusDot);
+                userDiv.appendChild(usernameSpan);
+                userItem.appendChild(userDiv);
+                userList.appendChild(userItem);
+            });
+            
+            // Update members sidebar
+            updateMembersSidebar();
+        }
+        
+        function updateMembersSidebar() {
+            const onlineMembersList = document.getElementById('onlineMembersList');
+            const offlineMembersList = document.getElementById('offlineMembersList');
+            
+            onlineMembersList.innerHTML = '';
+            offlineMembersList.innerHTML = '';
+            
+            const onlineUsers = users.filter(user => user.online);
+            const offlineUsers = users.filter(user => !user.online);
+            
+            document.getElementById('onlineCountSidebar').textContent = onlineUsers.length;
+            document.getElementById('offlineCountSidebar').textContent = offlineUsers.length;
+            
+            onlineUsers.forEach(user => {
+                const memberItem = document.createElement('li');
+                memberItem.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800 cursor-pointer';
+                
+                memberItem.innerHTML = `
+                    <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                    <span class="${roles[user.role].color}">${user.username}</span>
+                    ${user.role === 'admin' ? '<span class="ml-auto text-xs text-gray-500">Owner</span>' : ''}
+                `;
+                
+                onlineMembersList.appendChild(memberItem);
+            });
+            
+            offlineUsers.forEach(user => {
+                const memberItem = document.createElement('li');
+                memberItem.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800 cursor-pointer';
+                
+                memberItem.innerHTML = `
+                    <div class="w-2 h-2 rounded-full bg-gray-500 mr-2"></div>
+                    <span class="${roles[user.role].color}">${user.username}</span>
+                `;
+                
+                offlineMembersList.appendChild(memberItem);
+            });
+        }
+        
+        function loadMessagesForChannel() {
+            messageList.innerHTML = '';
+            
+            // Add welcome message
+            const welcomeMsg = document.createElement('div');
+            welcomeMsg.className = 'message-enter mb-8 text-center';
+            
+            welcomeMsg.innerHTML = `
+                <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
+                    <i class="fas fa-code text-3xl text-green-400"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to #${currentChannel}!</h3>
+                <p class="text-gray-400">This is the start of the <span class="text-green-400">#${currentChannel}</span> channel.</p>
+            `;
+            
+            messageList.appendChild(welcomeMsg);
+            
+            // Add messages with staggered animations
+            if (messages[currentChannel]) {
+                messages[currentChannel].forEach((msg, index) => {
+                    setTimeout(() => {
+                        addMessageToChat(msg.user, msg.role, msg.time, msg.content, msg.pinned);
+                    }, index * 50);
+                });
+            }
+            
+            // Scroll to bottom
+            setTimeout(() => {
+                messageList.scrollTop = messageList.scrollHeight;
+            }, 100);
+        }
+        
+        function addMessageToChat(user, role, time, content, pinned = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-start">
+                    <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center mr-3">
+                        <i class="fas fa-user text-gray-400"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-baseline">
+                            <span class="font-medium ${roles[role].color} mr-2">${user}</span>
+                            <span class="text-xs text-gray-500">${time}</span>
+                        </div>
+                        <p class="text-gray-300">${content}</p>
+                        <div class="flex justify-end mt-2 space-x-3">
+                            <button class="text-xs text-gray-400 hover:text-green-400 reply-btn" data-user="${user}" data-content="${content}">
+                                <i class="fas fa-reply mr-1"></i> Reply
+                            </button>
+                            ${currentUser.role === 'admin' || currentUser.role === 'moderator' ? `
+                            <button class="text-xs text-gray-400 hover:text-green-400 pin-btn" data-pinned="${pinned}">
+                                <i class="fas fa-thumbtack mr-1"></i> ${pinned ? 'Unpin' : 'Pin'}
+                            </button>
+                            <button class="text-xs text-gray-400 hover:text-red-400 delete-btn">
+                                <i class="fas fa-trash mr-1"></i> Delete
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            messageList.appendChild(messageDiv);
+            
+            // Scroll to bottom if this is the latest message
+            if (messageList.scrollHeight - messageList.scrollTop - messageList.clientHeight < 100) {
+                messageList.scrollTop = messageList.scrollHeight;
+            }
+            
+            // Add event listeners to buttons
+            const replyBtn = messageDiv.querySelector('.reply-btn');
+            if (replyBtn) {
+                replyBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    replyToMessage = {
+                        user: replyBtn.dataset.user,
+                        content: replyBtn.dataset.content
+                    };
+                    showReplyIndicator(replyBtn.dataset.user, replyBtn.dataset.content);
+                });
+            }
+            
+            const pinBtn = messageDiv.querySelector('.pin-btn');
+            if (pinBtn) {
+                pinBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isPinned = pinBtn.dataset.pinned === 'true';
+                    pinBtn.innerHTML = `<i class="fas fa-thumbtack mr-1"></i> ${isPinned ? 'Pin' : 'Unpin'}`;
+                    pinBtn.dataset.pinned = !isPinned;
+                    messageDiv.classList.toggle('pinned-message');
+                    
+                    // Update in messages array
+                    const msgIndex = messages[currentChannel].findIndex(msg => 
+                        msg.user === user && msg.content === content && msg.time === time
+                    );
+                    
+                    if (msgIndex !== -1) {
+                        messages[currentChannel][msgIndex].pinned = !isPinned;
+                    }
+                });
+            }
+            
+            const deleteBtn = messageDiv.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    messageDiv.remove();
+                    
+                    // Remove from messages array
+                    messages[currentChannel] = messages[currentChannel].filter(msg => 
+                        !(msg.user === user && msg.content === content && msg.time === time)
+                    );
+                });
+            }
+        }
+        
+        function handleMessageInput(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const message = messageInput.value.trim();
+                if (!message) return;
+                
+                const now = new Date();
+                const timeString = `Today at ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+                
+                // Create message object
+                const msg = {
+                    user: currentUser.username,
+                    role: currentUser.role,
+                    time: timeString,
+                    content: message,
+                    pinned: false,
+                    timestamp: Date.now()
+                };
+                
+                // Add to local storage
+                if (!messages[currentChannel]) {
+                    messages[currentChannel] = [];
+                }
+                messages[currentChannel].push(msg);
+                
+                // Add to chat
+                addMessageToChat(currentUser.username, currentUser.role, timeString, message);
+                
+                // In a real app, this would send to server
+                // sendMessageToServer(msg);
+                
+                messageInput.value = '';
+                if (replyToMessage) cancelMessageReply();
+            }
+        }
+        
+        function showReplyIndicator(user, content) {
+            replyToUser.textContent = user;
+            replyPreview.textContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
+            replyIndicator.classList.remove('hidden');
+            messageInput.focus();
+        }
+        
+        function cancelMessageReply() {
+            replyToMessage = null;
+            replyIndicator.classList.add('hidden');
+        }
+        
+        function toggleMembersSidebar() {
+            membersSidebar.classList.toggle('hidden');
+        }
+        
+        function showPinnedMessages() {
+            const pinnedMessagesList = document.getElementById('pinnedMessagesList');
+            pinnedMessagesList.innerHTML = '';
+            
+            if (messages[currentChannel]) {
+                const pinnedMessages = messages[currentChannel].filter(msg => msg.pinned);
+                
+                if (pinnedMessages.length === 0) {
+                    pinnedMessagesList.innerHTML = '<p class="text-gray-400 text-center py-4">No pinned messages in this channel</p>';
+                } else {
+                    pinnedMessages.forEach(msg => {
+                        const pinnedMsgDiv = document.createElement('div');
+                        pinnedMsgDiv.className = 'pinned-message mb-4 p-3 rounded bg-gray-800';
+                        
+                        pinnedMsgDiv.innerHTML = `
+                            <div class="flex items-baseline mb-1">
+                                <span class="font-medium ${roles[msg.role].color} mr-2">${msg.user}</span>
+                                <span class="text-xs text-gray-500">${msg.time}</span>
+                            </div>
+                            <p class="text-gray-300">${msg.content}</p>
+                            <div class="flex justify-end mt-2">
+                                <button class="text-xs text-gray-400 hover:text-green-400 jump-btn" data-time="${msg.timestamp}">
+                                    <i class="fas fa-arrow-up mr-1"></i> Jump
+                                </button>
+                            </div>
+                        `;
+                        
+                        pinnedMessagesList.appendChild(pinnedMsgDiv);
+                        
+                        // Add jump button event
+                        const jumpBtn = pinnedMsgDiv.querySelector('.jump-btn');
+                        if (jumpBtn) {
+                            jumpBtn.addEventListener('click', () => {
+                                hidePinnedMessages();
+                                // Scroll to message (simplified for this example)
+                                alert('In a real app, this would scroll to the message');
+                            });
+                        }
+                    });
+                }
+            }
+            
+            pinnedMessagesModal.classList.remove('hidden');
+        }
+        
+        function hidePinnedMessages() {
+            pinnedMessagesModal.classList.add('hidden');
+        }
+        
+        function showCreateChannelModal() {
+            if (currentUser.role === 'admin' || currentUser.role === 'moderator') {
+                createChannelModal.classList.remove('hidden');
+            } else {
+                alert('You do not have permission to create channels.');
+            }
+        }
+        
+        function hideCreateChannelModal() {
+            createChannelModal.classList.add('hidden');
+            createChannelForm.reset();
+        }
+        
+        function handleCreateChannel(e) {
+            e.preventDefault();
+            const channelName = document.getElementById('channelName').value.trim().toLowerCase();
+            const description = document.getElementById('channelDescription').value.trim();
+            
+            if (!channelName) {
+                alert('Please enter a channel name');
+                return;
+            }
+            
+            if (channels.includes(channelName)) {
+                alert('Channel already exists');
+                return;
+            }
+            
+            // Add new channel
+            channels.push(channelName);
+            messages[channelName] = [];
+            
+            // Reload channels
+            loadChannels();
+            
+            // Close modal and reset form
+            hideCreateChannelModal();
+        }
+        
+        // Simulate server communication in local mode
+        function sendMessageToServer(msg) {
+            // In a real app, this would be a fetch request to your backend
+            console.log('Message sent to server:', msg);
+            
+            // Simulate other users receiving the message
+            if (Math.random() > 0.7) { // 30% chance of a reply
+                setTimeout(() => {
+                    const otherUsers = users.filter(u => u.username !== currentUser.username && u.online);
+                    if (otherUsers.length > 0) {
+                        const responder = otherUsers[Math.floor(Math.random() * otherUsers.length)];
+                        const responses = [
+                            'Interesting point!',
+                            'I agree with that.',
+                            'Can you explain more?',
+                            'Thanks for sharing!',
+                            'Let me think about that...'
+                        ];
+                        
+                        const now = new Date();
+                        const timeString = `Today at ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+                        
+                        const responseMsg = {
+                            user: responder.username,
+                            role: responder.role,
+                            time: timeString,
+                            content: responses[Math.floor(Math.random() * responses.length)],
+                            pinned: false,
+                            timestamp: Date.now()
+                        };
+                        
+                        messages[currentChannel].push(responseMsg);
+                        addMessageToChat(responseMsg.user, responseMsg.role, responseMsg.time, responseMsg.content);
+                    }
+                }, 2000 + Math.random() * 3000);
+            }
+        }
+    </script>
+</body>
+</html>
