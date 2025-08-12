@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	  // Basic validation
 	  if (!username || !email || !password) {
-		showAuthError('All fields are required');
+		alert('All fields are required');
 		return;
 	  }
 
@@ -626,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		
 	  } catch (error) {
 		console.error('Signup error:', error);
-		showAuthError(error.message || 'Failed to connect to server');
+		alert(error.message || 'Failed to connect to server');
 	  }
 	}
 
