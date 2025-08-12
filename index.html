@@ -7,185 +7,62 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* All previous styles remain the same */
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
         
-        .gradient-bg {
-            background: linear-gradient(-45deg, #0f0f0f, #1a2e1a, #0f0f0f, #1a2e1a);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+        /* ... (keep all existing styles) ... */
+        
+        /* Loading dots animation */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
         
-        .message-enter {
-            animation: messageEnter 0.3s ease-out;
+        .bounce-1 { animation: bounce 0.6s infinite ease-in-out; }
+        .bounce-2 { animation: bounce 0.6s infinite ease-in-out 0.2s; }
+        .bounce-3 { animation: bounce 0.6s infinite ease-in-out 0.4s; }
+        
+        /* Signing in notification */
+        .signing-in-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+            border: 1px solid #2ecc71;
         }
         
-        @keyframes messageEnter {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .signing-in-text {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #2ecc71;
         }
         
-        .channel-hover:hover {
-            background-color: rgba(46, 204, 113, 0.1);
-            transform: translateX(5px);
-            transition: all 0.2s ease;
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
         
-        .role-admin { color: #e74c3c; }
-        .role-moderator { color: #3498db; }
-        .role-member { color: #2ecc71; }
-        .role-guest { color: #95a5a6; }
-        
-        .pinned-message {
-            border-left: 3px solid #f1c40f;
-            background-color: rgba(241, 196, 15, 0.05);
-        }
-        
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .sidebar::-webkit-scrollbar-track {
-            background: #0f0f0f;
-        }
-        
-        .sidebar::-webkit-scrollbar-thumb {
+        .dot {
+            width: 12px;
+            height: 12px;
             background-color: #2ecc71;
-            border-radius: 6px;
+            border-radius: 50%;
         }
-        
-        .modal {
-            animation: modalFadeIn 0.3s ease-out;
-        }
-        
-        @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    
-    @keyframes progress {
-        0% { width: 70%; }
-        100% { width: 75%; }
-    }
-    
-    .animate-progress {
-        animation: progress 2s ease-in-out infinite alternate;
-    }
-    
-    /* Loading dots animation */
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-    }
-    
-    .bounce-1 { animation: bounce 0.6s infinite ease-in-out; }
-    .bounce-2 { animation: bounce 0.6s infinite ease-in-out 0.2s; }
-    .bounce-3 { animation: bounce 0.6s infinite ease-in-out 0.4s; }
-    
-    /* Signing in notification */
-    .signing-in-notification {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(0, 0, 0, 0.8);
-        padding: 20px 30px;
-        border-radius: 10px;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
-        border: 1px solid #2ecc71;
-    }
-    
-    .signing-in-text {
-        margin-bottom: 15px;
-        font-size: 18px;
-        color: #2ecc71;
-    }
-    
-    .loading-dots {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .dot {
-        width: 12px;
-        height: 12px;
-        background-color: #2ecc71;
-        border-radius: 50%;
-    }
-    
-    /* Development Notification Styles */
-    @keyframes slideIn {
-        from { transform: translateY(100%); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-    }
-    
-    .notification {
-        animation: slideIn 0.5s ease-out forwards;
-    }
-    
-    .pulse {
-        animation: pulse 2s infinite;
-    }
-    
-    .close-btn:hover {
-        transform: rotate(90deg);
-        transition: transform 0.3s ease;
-    }
-    
-    .leaf {
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        background-color: rgba(255, 255, 255, 0.3);
-        border-radius: 50% 0 50% 50%;
-        transform: rotate(-45deg);
-    }
-    
-    .leaf-1 {
-        top: 10px;
-        left: 10px;
-        animation: float 4s ease-in-out infinite;
-    }
-    
-    .leaf-2 {
-        bottom: 15px;
-        right: 15px;
-        animation: float 3s ease-in-out infinite reverse;
-    }
-    
-    @keyframes float {
-        0% { transform: translateY(0) rotate(-45deg); }
-        50% { transform: translateY(-10px) rotate(-45deg); }
-        100% { transform: translateY(0) rotate(-45deg); }
-    }
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
@@ -215,6 +92,10 @@
                 <div class="mb-6">
                     <label for="loginPassword" class="block text-gray-300 mb-2">Password</label>
                     <input type="password" id="loginPassword" class="w-full bg-gray-800 border border-gray-700 rounded px-4 py-2 text-white focus:border-green-500 focus:outline-none" required>
+                </div>
+                <div class="flex items-center mb-4">
+                    <input type="checkbox" id="rememberMe" class="mr-2">
+                    <label for="rememberMe" class="text-gray-300">Remember me</label>
                 </div>
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition duration-300">Login</button>
             </form>
@@ -329,6 +210,9 @@
                     <div id="messageList">
                         <!-- Messages will be populated here -->
                     </div>
+                    <div id="loadingMore" class="text-center text-gray-500 py-4 hidden">
+                        Loading more messages...
+                    </div>
                 </div>
             </div>
             
@@ -433,7 +317,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api'; // Base API URL
+        const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api';
         
         // Current user state
         let currentUser = {
@@ -445,23 +329,10 @@
         let currentChannel = 'general';
         let replyToMessage = null;
         let lastMessageTime = 0;
-        
-        // Local storage for messages and channels
-        let messages = {};
-        let channels = ['general', 'announcements', 'hacking', 'projects', 'off-topic'];
-        let users = [
-            { username: 'Admin', role: 'admin', online: true },
-            { username: 'Moderator', role: 'moderator', online: true },
-            { username: 'Member', role: 'member', online: true }
-        ];
-        
-        // Roles
-        const roles = {
-            'admin': { name: 'Admin', color: 'role-admin' },
-            'moderator': { name: 'Moderator', color: 'role-moderator' },
-            'member': { name: 'Member', color: 'role-member' },
-            'guest': { name: 'Guest', color: 'role-guest' }
-        };
+        let channelTotal = 0;
+        let channelOffset = 0;
+        let channelLoading = false;
+        const PAGE_SIZE = 50;
         
         // DOM Elements
         const authModal = document.getElementById('authModal');
@@ -476,6 +347,8 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const messageInput = document.getElementById('messageInput');
         const messageList = document.getElementById('messageList');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const loadingMore = document.getElementById('loadingMore');
         const channelList = document.getElementById('channelList');
         const userList = document.getElementById('userList');
         const onlineCount = document.getElementById('onlineCount');
@@ -495,6 +368,7 @@
         const closeCreateChannelModal = document.getElementById('closeCreateChannelModal');
         const createChannelForm = document.getElementById('createChannelForm');
         const signingInNotification = document.getElementById('signingInNotification');
+        const rememberMeCheckbox = document.getElementById('rememberMe');
         
         // Event Listeners
         toggleAuth.addEventListener('click', toggleAuthForms);
@@ -510,6 +384,7 @@
         createChannelBtn.addEventListener('click', showCreateChannelModal);
         closeCreateChannelModal.addEventListener('click', hideCreateChannelModal);
         createChannelForm.addEventListener('submit', handleCreateChannel);
+        messagesContainer.addEventListener('scroll', handleScroll);
         
         // Initialize the app
         initApp();
@@ -517,11 +392,14 @@
         function initApp() {
             // Check for existing token in cookies or localStorage
             checkAutoLogin();
+            
+            // Set up periodic updates
+            setInterval(loadUsers, 30000); // Update users every 30 seconds
         }
         
         async function checkAutoLogin() {
-            // First try to get token from localStorage
-            const token = localStorage.getItem('wb_token');
+            // First try to get token from cookies
+            const token = getCookie('wb_token');
             
             if (token) {
                 try {
@@ -547,7 +425,7 @@
                         successfulLogin();
                     } else {
                         // Token is invalid, remove it
-                        localStorage.removeItem('wb_token');
+                        document.cookie = 'wb_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                     }
                 } catch (error) {
                     console.error('Auto-login error:', error);
@@ -556,6 +434,22 @@
                     signingInNotification.classList.add('hidden');
                 }
             }
+        }
+        
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+        
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
         }
         
         function toggleAuthForms(e) {
@@ -604,8 +498,12 @@
                 
                 const data = await response.json();
                 
-                // Store the token in localStorage
-                localStorage.setItem('wb_token', data.token);
+                // Store the token in cookie or localStorage based on "remember me"
+                if (rememberMeCheckbox.checked) {
+                    setCookie('wb_token', data.token, 7); // Store for 7 days
+                } else {
+                    setCookie('wb_token', data.token); // Session cookie
+                }
                 
                 currentUser = {
                     username: data.username,
@@ -653,8 +551,8 @@
                 
                 const data = await response.json();
                 
-                // Store the token in localStorage
-                localStorage.setItem('wb_token', data.token);
+                // Store the token in cookie
+                setCookie('wb_token', data.token, 7); // Store for 7 days
                 
                 currentUser = {
                     username: data.username,
@@ -708,7 +606,7 @@
                 console.error('Logout error:', error);
             } finally {
                 // Clear token and reset user state
-                localStorage.removeItem('wb_token');
+                document.cookie = 'wb_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                 currentUser = {
                     username: null,
                     role: 'guest',
@@ -736,41 +634,49 @@
             }
         }
         
-        function loadChannels() {
-            channelList.innerHTML = '';
-            
-            channels.forEach(channel => {
-                const channelItem = document.createElement('li');
-                channelItem.className = 'channel-item mb-1';
-                channelItem.dataset.channel = channel;
+        async function loadChannels() {
+            try {
+                const response = await fetch(`${API_BASE}/channels`);
+                if (!response.ok) throw new Error('Failed to load channels');
                 
-                const channelLink = document.createElement('a');
-                channelLink.href = '#';
-                channelLink.className = 'flex items-center py-1 px-2 rounded channel-hover text-gray-300 hover:text-white';
+                const channels = await response.json();
+                channelList.innerHTML = '';
                 
-                const icon = document.createElement('i');
-                icon.className = 'fas fa-hashtag mr-2 text-gray-500';
-                
-                const channelName = document.createElement('span');
-                channelName.textContent = channel;
-                
-                channelLink.appendChild(icon);
-                channelLink.appendChild(channelName);
-                channelItem.appendChild(channelLink);
-                channelList.appendChild(channelItem);
-                
-                // Add click event to change channel
-                channelLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    currentChannel = channel;
-                    currentChannelDisplay.textContent = channel;
-                    highlightCurrentChannel();
-                    loadMessagesForChannel();
+                channels.forEach(channel => {
+                    const channelItem = document.createElement('li');
+                    channelItem.className = 'channel-item mb-1';
+                    channelItem.dataset.channel = channel.name;
+                    
+                    const channelLink = document.createElement('a');
+                    channelLink.href = '#';
+                    channelLink.className = 'flex items-center py-1 px-2 rounded channel-hover text-gray-300 hover:text-white';
+                    
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-hashtag mr-2 text-gray-500';
+                    
+                    const channelName = document.createElement('span');
+                    channelName.textContent = channel.name;
+                    
+                    channelLink.appendChild(icon);
+                    channelLink.appendChild(channelName);
+                    channelItem.appendChild(channelLink);
+                    channelList.appendChild(channelItem);
+                    
+                    // Add click event to change channel
+                    channelLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        currentChannel = channel.name;
+                        currentChannelDisplay.textContent = channel.name;
+                        highlightCurrentChannel();
+                        loadMessagesForChannel();
+                    });
                 });
-            });
-            
-            // Highlight current channel
-            highlightCurrentChannel();
+                
+                // Highlight current channel
+                highlightCurrentChannel();
+            } catch (error) {
+                console.error('Error loading channels:', error);
+            }
         }
         
         function highlightCurrentChannel() {
@@ -784,39 +690,47 @@
             });
         }
         
-        function loadUsers() {
-            userList.innerHTML = '';
-            
-            // Count online users
-            const onlineUsers = users.filter(user => user.online);
-            onlineCount.textContent = onlineUsers.length;
-            
-            // Display users
-            users.forEach(user => {
-                const userItem = document.createElement('li');
-                userItem.className = 'user-item mb-1';
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/users`);
+                if (!response.ok) throw new Error('Failed to load users');
                 
-                const userDiv = document.createElement('div');
-                userDiv.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800';
+                const users = await response.json();
+                userList.innerHTML = '';
                 
-                const statusDot = document.createElement('div');
-                statusDot.className = `w-3 h-3 rounded-full mr-2 ${user.online ? 'bg-green-500' : 'bg-gray-500'}`;
+                // Count online users
+                const onlineUsers = users.filter(user => user.online);
+                onlineCount.textContent = onlineUsers.length;
                 
-                const usernameSpan = document.createElement('span');
-                usernameSpan.className = roles[user.role].color;
-                usernameSpan.textContent = user.username;
+                // Display users
+                users.forEach(user => {
+                    const userItem = document.createElement('li');
+                    userItem.className = 'user-item mb-1';
+                    
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800';
+                    
+                    const statusDot = document.createElement('div');
+                    statusDot.className = `w-3 h-3 rounded-full mr-2 ${user.online ? 'bg-green-500' : 'bg-gray-500'}`;
+                    
+                    const usernameSpan = document.createElement('span');
+                    usernameSpan.className = roles[user.role].color;
+                    usernameSpan.textContent = user.username;
+                    
+                    userDiv.appendChild(statusDot);
+                    userDiv.appendChild(usernameSpan);
+                    userItem.appendChild(userDiv);
+                    userList.appendChild(userItem);
+                });
                 
-                userDiv.appendChild(statusDot);
-                userDiv.appendChild(usernameSpan);
-                userItem.appendChild(userDiv);
-                userList.appendChild(userItem);
-            });
-            
-            // Update members sidebar
-            updateMembersSidebar();
+                // Update members sidebar
+                updateMembersSidebar(users);
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
         }
         
-        function updateMembersSidebar() {
+        function updateMembersSidebar(users) {
             const onlineMembersList = document.getElementById('onlineMembersList');
             const offlineMembersList = document.getElementById('offlineMembersList');
             
@@ -857,18 +771,27 @@
         
         async function loadMessagesForChannel() {
             try {
-                const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}`, {
-                    headers: {
-                        'Authorization': currentUser.token ? `Bearer ${currentUser.token}` : ''
-                    }
-                });
+                // Reset pagination
+                channelOffset = 0;
+                channelTotal = 0;
+                messageList.innerHTML = '';
+                loadingMore.classList.add('hidden');
                 
-                if (!response.ok) {
-                    throw new Error('Failed to load messages');
-                }
+                // First get the total count
+                const countResponse = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=0&limit=1`);
+                if (!countResponse.ok) throw new Error('Failed to load messages');
+                
+                const countData = await countResponse.json();
+                channelTotal = countData.total;
+                
+                // Then load the most recent messages
+                const offset = Math.max(0, channelTotal - PAGE_SIZE);
+                channelOffset = offset;
+                
+                const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${offset}&limit=${PAGE_SIZE}`);
+                if (!response.ok) throw new Error('Failed to load messages');
                 
                 const data = await response.json();
-                messageList.innerHTML = '';
                 
                 // Add welcome message if no messages
                 if (data.messages.length === 0) {
@@ -890,9 +813,53 @@
                 });
                 
                 // Scroll to bottom
-                messageList.scrollTop = messageList.scrollHeight;
+                setTimeout(() => {
+                    messageList.scrollTop = messageList.scrollHeight;
+                }, 100);
             } catch (error) {
                 console.error('Error loading messages:', error);
+            }
+        }
+        
+        async function handleScroll() {
+            if (channelLoading || channelOffset <= 0) return;
+            
+            // Check if we're near the top
+            if (messagesContainer.scrollTop < 100) {
+                channelLoading = true;
+                loadingMore.classList.remove('hidden');
+                
+                try {
+                    const newOffset = Math.max(0, channelOffset - PAGE_SIZE);
+                    const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${newOffset}&limit=${channelOffset - newOffset}`);
+                    if (!response.ok) throw new Error('Failed to load more messages');
+                    
+                    const data = await response.json();
+                    
+                    // Save current scroll position
+                    const prevHeight = messageList.scrollHeight;
+                    const prevScroll = messagesContainer.scrollTop;
+                    
+                    // Prepend messages
+                    const fragment = document.createDocumentFragment();
+                    data.messages.forEach(msg => {
+                        const msgDiv = createMessageElement(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned);
+                        fragment.prepend(msgDiv);
+                    });
+                    
+                    messageList.prepend(fragment);
+                    
+                    // Adjust scroll position
+                    const newHeight = messageList.scrollHeight;
+                    messagesContainer.scrollTop = prevScroll + (newHeight - prevHeight);
+                    
+                    channelOffset = newOffset;
+                } catch (error) {
+                    console.error('Error loading more messages:', error);
+                } finally {
+                    channelLoading = false;
+                    loadingMore.classList.add('hidden');
+                }
             }
         }
         
@@ -901,7 +868,7 @@
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
         
-        function addMessageToChat(user, role, time, content, pinned = false) {
+        function createMessageElement(user, role, time, content, pinned = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
             
@@ -933,12 +900,12 @@
                 </div>
             `;
             
+            return messageDiv;
+        }
+        
+        function addMessageToChat(user, role, time, content, pinned = false) {
+            const messageDiv = createMessageElement(user, role, time, content, pinned);
             messageList.appendChild(messageDiv);
-            
-            // Scroll to bottom if this is the latest message
-            if (messageList.scrollHeight - messageList.scrollTop - messageList.clientHeight < 100) {
-                messageList.scrollTop = messageList.scrollHeight;
-            }
             
             // Add event listeners to buttons
             const replyBtn = messageDiv.querySelector('.reply-btn');
@@ -958,12 +925,7 @@
                 pinBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     const isPinned = pinBtn.dataset.pinned === 'true';
-                    pinBtn.innerHTML = `<i class="fas fa-thumbtack mr-1"></i> ${isPinned ? 'Pin' : 'Unpin'}`;
-                    pinBtn.dataset.pinned = !isPinned;
-                    messageDiv.classList.toggle('pinned-message');
-                    
-                    // In a real app, you would update this on the server
-                    console.log(`Message ${isPinned ? 'unpinned' : 'pinned'}`);
+                    togglePinMessage(messageDiv, isPinned);
                 });
             }
             
@@ -971,11 +933,62 @@
             if (deleteBtn) {
                 deleteBtn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    messageDiv.remove();
-                    
-                    // In a real app, you would delete this on the server
-                    console.log('Message deleted');
+                    deleteMessage(messageDiv);
                 });
+            }
+        }
+        
+        async function togglePinMessage(messageDiv, isPinned) {
+            try {
+                const response = await fetch(`${API_BASE}/messages/pin`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        channel: currentChannel,
+                        messageId: messageDiv.dataset.messageId,
+                        pinned: !isPinned
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to toggle pin');
+                }
+                
+                messageDiv.classList.toggle('pinned-message');
+                const pinBtn = messageDiv.querySelector('.pin-btn');
+                if (pinBtn) {
+                    pinBtn.innerHTML = `<i class="fas fa-thumbtack mr-1"></i> ${isPinned ? 'Pin' : 'Unpin'}`;
+                    pinBtn.dataset.pinned = !isPinned;
+                }
+            } catch (error) {
+                console.error('Error toggling pin:', error);
+            }
+        }
+        
+        async function deleteMessage(messageDiv) {
+            try {
+                const response = await fetch(`${API_BASE}/messages`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({
+                        channel: currentChannel,
+                        messageId: messageDiv.dataset.messageId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to delete message');
+                }
+                
+                messageDiv.remove();
+            } catch (error) {
+                console.error('Error deleting message:', error);
             }
         }
         
@@ -1014,6 +1027,9 @@
                     if (replyToMessage) {
                         cancelMessageReply();
                     }
+                    
+                    // Scroll to bottom
+                    messageList.scrollTop = messageList.scrollHeight;
                 } catch (error) {
                     console.error('Error sending message:', error);
                 }
@@ -1036,51 +1052,60 @@
             membersSidebar.classList.toggle('hidden');
         }
         
-        function showPinnedMessages() {
-            const pinnedMessagesList = document.getElementById('pinnedMessagesList');
-            pinnedMessagesList.innerHTML = '';
-            
-            // In a real app, you would fetch pinned messages from the server
-            const pinnedMessages = [
-                { username: 'Admin', role: 'admin', content: 'Welcome to our secure chat platform!', time: '10:00 AM' },
-                { username: 'Moderator', role: 'moderator', content: 'Please read the rules before posting.', time: '11:30 AM' }
-            ];
-            
-            if (pinnedMessages.length === 0) {
-                pinnedMessagesList.innerHTML = '<p class="text-gray-400 text-center py-4">No pinned messages in this channel</p>';
-            } else {
-                pinnedMessages.forEach(msg => {
-                    const pinnedMsgDiv = document.createElement('div');
-                    pinnedMsgDiv.className = 'pinned-message mb-4 p-3 rounded bg-gray-800';
-                    
-                    pinnedMsgDiv.innerHTML = `
-                        <div class="flex items-baseline mb-1">
-                            <span class="font-medium ${roles[msg.role].color} mr-2">${msg.username}</span>
-                            <span class="text-xs text-gray-500">${msg.time}</span>
-                        </div>
-                        <p class="text-gray-300">${msg.content}</p>
-                        <div class="flex justify-end mt-2">
-                            <button class="text-xs text-gray-400 hover:text-green-400 jump-btn" data-time="${msg.time}">
-                                <i class="fas fa-arrow-up mr-1"></i> Jump
-                            </button>
-                        </div>
-                    `;
-                    
-                    pinnedMessagesList.appendChild(pinnedMsgDiv);
-                    
-                    // Add jump button event
-                    const jumpBtn = pinnedMsgDiv.querySelector('.jump-btn');
-                    if (jumpBtn) {
-                        jumpBtn.addEventListener('click', () => {
-                            hidePinnedMessages();
-                            // In a real app, this would scroll to the message
-                            console.log(`Jump to message at ${jumpBtn.dataset.time}`);
-                        });
+        async function showPinnedMessages() {
+            try {
+                const response = await fetch(`${API_BASE}/messages/pinned?channel=${encodeURIComponent(currentChannel)}`, {
+                    headers: {
+                        'Authorization': currentUser.token ? `Bearer ${currentUser.token}` : ''
                     }
                 });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load pinned messages');
+                }
+                
+                const pinnedMessages = await response.json();
+                const pinnedMessagesList = document.getElementById('pinnedMessagesList');
+                pinnedMessagesList.innerHTML = '';
+                
+                if (pinnedMessages.length === 0) {
+                    pinnedMessagesList.innerHTML = '<p class="text-gray-400 text-center py-4">No pinned messages in this channel</p>';
+                } else {
+                    pinnedMessages.forEach(msg => {
+                        const pinnedMsgDiv = document.createElement('div');
+                        pinnedMsgDiv.className = 'pinned-message mb-4 p-3 rounded bg-gray-800';
+                        
+                        pinnedMsgDiv.innerHTML = `
+                            <div class="flex items-baseline mb-1">
+                                <span class="font-medium ${roles[msg.role].color} mr-2">${msg.username}</span>
+                                <span class="text-xs text-gray-500">${formatTime(msg.timestamp)}</span>
+                            </div>
+                            <p class="text-gray-300">${msg.content}</p>
+                            <div class="flex justify-end mt-2">
+                                <button class="text-xs text-gray-400 hover:text-green-400 jump-btn" data-time="${msg.timestamp}">
+                                    <i class="fas fa-arrow-up mr-1"></i> Jump
+                                </button>
+                            </div>
+                        `;
+                        
+                        pinnedMessagesList.appendChild(pinnedMsgDiv);
+                        
+                        // Add jump button event
+                        const jumpBtn = pinnedMsgDiv.querySelector('.jump-btn');
+                        if (jumpBtn) {
+                            jumpBtn.addEventListener('click', () => {
+                                hidePinnedMessages();
+                                // In a real app, this would scroll to the message
+                                console.log(`Jump to message at ${jumpBtn.dataset.time}`);
+                            });
+                        }
+                    });
+                }
+                
+                pinnedMessagesModal.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading pinned messages:', error);
             }
-            
-            pinnedMessagesModal.classList.remove('hidden');
         }
         
         function hidePinnedMessages() {
@@ -1128,9 +1153,14 @@
                 
                 const data = await response.json();
                 
-                // Add the new channel to our list
-                channels.push(data.name);
-                loadChannels();
+                // Reload channels
+                await loadChannels();
+                
+                // Switch to the new channel
+                currentChannel = data.name;
+                currentChannelDisplay.textContent = data.name;
+                highlightCurrentChannel();
+                loadMessagesForChannel();
                 
                 // Hide the modal and reset the form
                 hideCreateChannelModal();
