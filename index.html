@@ -1109,6 +1109,11 @@ document.addEventListener('DOMContentLoaded', function() {
 		  channels = chs.map(c => c.name);
 		  loadChannels(); // your existing render
 		}
+	function showAuthError(message) {
+	  const el = document.getElementById('authError');
+	  el.textContent = message;
+	  el.style.display = 'block';
+	}
 
      
     </script>
