@@ -77,6 +77,7 @@
                 transform: translateY(0);
             }
         }
+    
     @keyframes progress {
         0% { width: 70%; }
         100% { width: 75%; }
@@ -85,60 +86,119 @@
     .animate-progress {
         animation: progress 2s ease-in-out infinite alternate;
     }
-	/* Development Notification Styles */
-@keyframes slideIn {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-}
-
-.notification {
-    animation: slideIn 0.5s ease-out forwards;
-}
-
-.pulse {
-    animation: pulse 2s infinite;
-}
-
-.close-btn:hover {
-    transform: rotate(90deg);
-    transition: transform 0.3s ease;
-}
-
-.leaf {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 50% 0 50% 50%;
-    transform: rotate(-45deg);
-}
-
-.leaf-1 {
-    top: 10px;
-    left: 10px;
-    animation: float 4s ease-in-out infinite;
-}
-
-.leaf-2 {
-    bottom: 15px;
-    right: 15px;
-    animation: float 3s ease-in-out infinite reverse;
-}
-
-@keyframes float {
-    0% { transform: translateY(0) rotate(-45deg); }
-    50% { transform: translateY(-10px) rotate(-45deg); }
-    100% { transform: translateY(0) rotate(-45deg); }
-}
+    
+    /* Loading dots animation */
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .bounce-1 { animation: bounce 0.6s infinite ease-in-out; }
+    .bounce-2 { animation: bounce 0.6s infinite ease-in-out 0.2s; }
+    .bounce-3 { animation: bounce 0.6s infinite ease-in-out 0.4s; }
+    
+    /* Signing in notification */
+    .signing-in-notification {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        padding: 20px 30px;
+        border-radius: 10px;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+        border: 1px solid #2ecc71;
+    }
+    
+    .signing-in-text {
+        margin-bottom: 15px;
+        font-size: 18px;
+        color: #2ecc71;
+    }
+    
+    .loading-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .dot {
+        width: 12px;
+        height: 12px;
+        background-color: #2ecc71;
+        border-radius: 50%;
+    }
+    
+    /* Development Notification Styles */
+    @keyframes slideIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+    
+    .notification {
+        animation: slideIn 0.5s ease-out forwards;
+    }
+    
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+    
+    .close-btn:hover {
+        transform: rotate(90deg);
+        transition: transform 0.3s ease;
+    }
+    
+    .leaf {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 50% 0 50% 50%;
+        transform: rotate(-45deg);
+    }
+    
+    .leaf-1 {
+        top: 10px;
+        left: 10px;
+        animation: float 4s ease-in-out infinite;
+    }
+    
+    .leaf-2 {
+        bottom: 15px;
+        right: 15px;
+        animation: float 3s ease-in-out infinite reverse;
+    }
+    
+    @keyframes float {
+        0% { transform: translateY(0) rotate(-45deg); }
+        50% { transform: translateY(-10px) rotate(-45deg); }
+        100% { transform: translateY(0) rotate(-45deg); }
+    }
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
+    <!-- Signing In Notification (initially hidden) -->
+    <div id="signingInNotification" class="signing-in-notification hidden">
+        <div class="signing-in-text">Signing you in...</div>
+        <div class="loading-dots">
+            <div class="dot bounce-1"></div>
+            <div class="dot bounce-2"></div>
+            <div class="dot bounce-3"></div>
+        </div>
+    </div>
+
     <!-- Login/Signup Modal -->
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
         <div class="modal bg-gray-900 rounded-lg p-8 w-full max-w-md border border-green-700">
@@ -178,113 +238,6 @@
             <div id="authError" class="mt-4 text-red-400 hidden"></div>
         </div>
     </div>
-<!-- Put this near the end of your <body>, or anywhere inside your current HTML -->
-<div id="notification" class="notification fixed top-5 left-1/2 transform -translate-x-1/2 w-full max-w-md z-[9999] hidden">
-  <div class="relative bg-green-400 text-white rounded-lg shadow-xl overflow-hidden pulse">
-    <!-- Decorative leaves -->
-    <div class="leaf leaf-1"></div>
-    <div class="leaf leaf-2"></div>
-    <div class="p-6">
-      <div class="flex items-start justify-between">
-        <div class="flex items-center space-x-3">
-          <div class="bg-white bg-opacity-20 p-3 rounded-full">
-            <i class="fas fa-tools text-white text-xl"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-lg">We're Almost Finished!</h3>
-            <p class="text-green-100 text-sm">Just need to fix a few more things tomorrow. Thanks for your patience!</p>
-          </div>
-        </div>
-        <button id="close-btn" class="close-btn text-white hover:text-green-200 focus:outline-none transition-all">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<style>
-  @keyframes slideIn {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-  }
-  
-  .notification {
-    animation: slideIn 0.5s ease-out forwards;
-  }
-  
-  .pulse {
-    animation: pulse 2s infinite;
-  }
-  
-  .close-btn:hover {
-    transform: rotate(90deg);
-    transition: transform 0.3s ease;
-  }
-  
-  .leaf {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 50% 0 50% 50%;
-    transform: rotate(-45deg);
-  }
-  
-  .leaf-1 {
-    top: 10px;
-    left: 10px;
-    animation: float 4s ease-in-out infinite;
-  }
-  
-  .leaf-2 {
-    bottom: 15px;
-    right: 15px;
-    animation: float 3s ease-in-out infinite reverse;
-  }
-  
-  @keyframes float {
-    0% { transform: translateY(0) rotate(-45deg); }
-    50% { transform: translateY(-10px) rotate(-45deg); }
-    100% { transform: translateY(0) rotate(-45deg); }
-  }
-</style>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const notification = document.getElementById('notification');
-    const closeBtn = document.getElementById('close-btn');
-
-    // Show notification after a small delay
-    setTimeout(() => {
-      notification.classList.remove('hidden');
-    }, 1000);
-
-    // Close button functionality
-    closeBtn.addEventListener('click', function() {
-      notification.style.animation = 'slideIn 0.5s ease-out reverse forwards';
-      setTimeout(() => {
-        notification.remove();
-      }, 500);
-    });
-
-    // Auto-close after 3 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.style.animation = 'slideIn 0.5s ease-out reverse forwards';
-        setTimeout(() => {
-          notification.remove();
-        }, 500);
-      }
-    }, 3000);
-  });
-</script>
 
     <!-- Main App (hidden until authenticated) -->
     <div id="appContainer" class="hidden w-full flex">
@@ -480,45 +433,8 @@
     </div>
 
     <script>
-	
-	// Development Notification
-document.addEventListener('DOMContentLoaded', function() {
-    const notification = document.getElementById('notification');
-    const closeBtn = document.getElementById('close-btn');
-    
-    // Show notification after a small delay
-    setTimeout(() => {
-        notification.classList.remove('hidden');
-    }, 1000);
-    
-    // Close button functionality
-    closeBtn.addEventListener('click', function() {
-        notification.style.animation = 'slideIn 0.5s ease-out reverse forwards';
-        setTimeout(() => {
-            notification.remove();
-        }, 500);
-    });
-    
-    // Auto-close after 10 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.animation = 'slideIn 0.5s ease-out reverse forwards';
-            setTimeout(() => {
-                notification.remove();
-            }, 500);
-        }
-    }, 10000);
-});
-	
-	const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api/endpoint'; // change for production
-	let authToken = localStorage.getItem('wb_token') || null;
-	let isAtBottom = true; // track whether user is at bottom
-	const PAGE_SIZE = 50;
-	let channelTotal = 0;
-	let channelOffset = 0; // current offset (0 = from start)
-	let channelLoading = false; // to avoid concurrent loads
-
-
+        const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api'; // Base API URL
+        
         // Current user state
         let currentUser = {
             username: null,
@@ -578,6 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const createChannelModal = document.getElementById('createChannelModal');
         const closeCreateChannelModal = document.getElementById('closeCreateChannelModal');
         const createChannelForm = document.getElementById('createChannelForm');
+        const signingInNotification = document.getElementById('signingInNotification');
         
         // Event Listeners
         toggleAuth.addEventListener('click', toggleAuthForms);
@@ -598,30 +515,47 @@ document.addEventListener('DOMContentLoaded', function() {
         initApp();
         
         function initApp() {
-            // Check localStorage for existing session
-            const savedUser = localStorage.getItem('chatUser');
+            // Check for existing token in cookies or localStorage
+            checkAutoLogin();
+        }
+        
+        async function checkAutoLogin() {
+            // First try to get token from localStorage
+            const token = localStorage.getItem('wb_token');
             
-            if (savedUser) {
+            if (token) {
                 try {
-                    currentUser = JSON.parse(savedUser);
-                    authModal.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
-                    updateUserDisplay();
-                    loadChannels();
-                    loadUsers();
-                    loadMessagesForChannel();
-                    messageInput.disabled = false;
-                } catch (e) {
-                    localStorage.removeItem('chatUser');
+                    // Show signing in notification
+                    signingInNotification.classList.remove('hidden');
+                    
+                    // Verify token with server
+                    const response = await fetch(`${API_BASE}/verify-token`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        currentUser = {
+                            username: data.username,
+                            role: data.role,
+                            token: token
+                        };
+                        
+                        successfulLogin();
+                    } else {
+                        // Token is invalid, remove it
+                        localStorage.removeItem('wb_token');
+                    }
+                } catch (error) {
+                    console.error('Auto-login error:', error);
+                } finally {
+                    // Hide signing in notification
+                    signingInNotification.classList.add('hidden');
                 }
             }
-            
-            // Initialize empty messages for each channel
-            channels.forEach(channel => {
-                if (!messages[channel]) {
-                    messages[channel] = [];
-                }
-            });
         }
         
         function toggleAuthForms(e) {
@@ -640,97 +574,107 @@ document.addEventListener('DOMContentLoaded', function() {
             authError.classList.add('hidden');
         }
         
-		async function handleLogin(e) {
-		  e.preventDefault();
-		  const username = document.getElementById('loginUsername').value.trim();
-		  const password = document.getElementById('loginPassword').value;
-		  if (!username || !password) { showAuthError('Missing fields'); return; }
-
-		  const resp = await fetch(`${API_BASE}/login`, {
-			method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username, password })
-		  });
-		  const data = await resp.json();
-		  if (!resp.ok) { showAuthError(data.error || 'Login failed'); return; }
-
-		  authToken = data.token;
-		  localStorage.setItem('wb_token', authToken);
-		  currentUser = { username: data.username, role: data.role };
-		  successfulLogin(); // your existing UI changes
-		  // mark online
-		  await updateOnlineStatus(true);
-		}
-
-	async function handleSignup(e) {
-	  e.preventDefault();
-	  const username = document.getElementById('signupUsername').value.trim();
-	  const email = document.getElementById('signupEmail').value;
-	  const password = document.getElementById('signupPassword').value;
-
-	  // Basic validation
-	  if (!username || !email || !password) {
-		alert('All fields are required');
-		return;
-	  }
-
-	  try {
-		const response = await fetch('https://secure-chat-website-https-converter.onrender.com/api/signup', {
-		  method: 'POST',
-		  headers: { 'Content-Type': 'application/json' },
-		  body: JSON.stringify({ username, email, password }),
-		  credentials: 'include' // Needed for cookies if using them
-		});
-
-		if (!response.ok) {
-		  const errorData = await response.json();
-		  throw new Error(errorData.error || 'Signup failed');
-		}
-
-		const data = await response.json();
-		console.log('Signup successful:', data);
-		// Handle successful signup (redirect, show message, etc.)
-		
-	  } catch (error) {
-		console.error('Signup error:', error);
-		alert(error.message || 'Failed to connect to server');
-	  }
-	}
-
-		async function handleLogout() {
-		  if (authToken) {
-			await fetch(`${API_BASE}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` } }).catch(()=>{});
-		  }
-		  localStorage.removeItem('wb_token');
-		  authToken = null;
-		  // existing UI reset code
-		  currentUser = { username: null, role: 'guest', token: null };
-		  successfulLogoutUI();
-		}
-
-        async function updateOnlineStatus(online = true) {
-		  // For simplicity, we just toggle server-side online flag via login/logout.
-		  // To keep UI updated, fetch /users periodically.
-		  // Optionally you can create a /status endpoint to POST heartbeat.
-		  try {
-			// We'll refresh user list after status change
-			await loadUsersFromServer();
-		  } catch (e) { console.warn(e); }
-		}
-
-		// Poll users every 15 seconds to update online/offline UI
-		setInterval(() => {
-		  if (appContainer.classList.contains('hidden')) return;
-		  loadUsersFromServer();
-		}, 15000);
-
-		async function loadUsersFromServer() {
-		  const h = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-		  const resp = await fetch(`${API_BASE}/users`, { headers: h });
-		  if (!resp.ok) return;
-		  const usersFromServer = await resp.json();
-		  users = usersFromServer; // replace local users array so your UI functions can use it
-		  loadUsers(); // existing function that reads 'users' to render
-		}
-
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showAuthError('Please enter both username and password');
+                return;
+            }
+            
+            try {
+                // Show signing in notification
+                signingInNotification.classList.remove('hidden');
+                
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Login failed');
+                }
+                
+                const data = await response.json();
+                
+                // Store the token in localStorage
+                localStorage.setItem('wb_token', data.token);
+                
+                currentUser = {
+                    username: data.username,
+                    role: data.role,
+                    token: data.token
+                };
+                
+                successfulLogin();
+            } catch (error) {
+                showAuthError(error.message);
+            } finally {
+                // Hide signing in notification
+                signingInNotification.classList.add('hidden');
+            }
+        }
+        
+        async function handleSignup(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('signupUsername').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            
+            if (!username || !email || !password) {
+                showAuthError('Please fill in all fields');
+                return;
+            }
+            
+            try {
+                // Show signing in notification
+                signingInNotification.classList.remove('hidden');
+                
+                const response = await fetch(`${API_BASE}/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Signup failed');
+                }
+                
+                const data = await response.json();
+                
+                // Store the token in localStorage
+                localStorage.setItem('wb_token', data.token);
+                
+                currentUser = {
+                    username: data.username,
+                    role: data.role,
+                    token: data.token
+                };
+                
+                successfulLogin();
+            } catch (error) {
+                showAuthError(error.message);
+            } finally {
+                // Hide signing in notification
+                signingInNotification.classList.add('hidden');
+            }
+        }
+        
+        function showAuthError(message) {
+            authError.textContent = message;
+            authError.classList.remove('hidden');
+        }
         
         function successfulLogin() {
             authModal.classList.add('hidden');
@@ -750,21 +694,34 @@ document.addEventListener('DOMContentLoaded', function() {
             authError.classList.add('hidden');
         }
         
-        function handleLogout() {
-            currentUser = {
-                username: null,
-                role: 'guest',
-                token: null
-            };
-            
-            localStorage.removeItem('chatUser');
-            
-            appContainer.classList.add('hidden');
-            authModal.classList.remove('hidden');
-            messageList.innerHTML = '';
-            channelList.innerHTML = '';
-            userList.innerHTML = '';
-            messageInput.disabled = true;
+        async function handleLogout() {
+            try {
+                if (currentUser.token) {
+                    await fetch(`${API_BASE}/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${currentUser.token}`
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                // Clear token and reset user state
+                localStorage.removeItem('wb_token');
+                currentUser = {
+                    username: null,
+                    role: 'guest',
+                    token: null
+                };
+                
+                appContainer.classList.add('hidden');
+                authModal.classList.remove('hidden');
+                messageList.innerHTML = '';
+                channelList.innerHTML = '';
+                userList.innerHTML = '';
+                messageInput.disabled = true;
+            }
         }
         
         function updateUserDisplay() {
@@ -898,65 +855,52 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-			async function loadMessagesForChannel() {
-				  // reset paging
-				  messageList.innerHTML = '';
-				  const channel = currentChannel;
-				  channelOffset = 0; // start from 0; we will compute offset to return last PAGE_SIZE
-				  channelLoading = true;
-
-				  // fetch channel total first
-				  const resp1 = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(channel)}&offset=0&limit=1`);
-				  const meta = await resp1.json().catch(()=>null);
-				  // Instead rely on the messages endpoint to return total; fetch last PAGE_SIZE chunk instead.
-
-				  // get total via a request for entire list length (inefficient) OR better: endpoint returns total (the server does).
-				  const resp2 = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(channel)}&offset=0&limit=1`);
-				  const j2 = await resp2.json();
-				  channelTotal = j2.total || 0;
-
-				  // compute offset for last PAGE_SIZE messages
-				  const start = Math.max(0, channelTotal - PAGE_SIZE);
-				  channelOffset = start;
-
-				  const resp = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(channel)}&offset=${start}&limit=${PAGE_SIZE}`);
-				  const data = await resp.json();
-				  // data.messages is ascending. Render them.
-				  messageList.innerHTML = ''; // remove welcome if desired
-				  data.messages.forEach(msg => addMessageToChat(msg.username, 'member', formatTime(msg.timestamp), msg.content, msg.pinned, msg.timestamp));
-				  // After initial load, go to bottom
-				  messageList.scrollTop = messageList.scrollHeight;
-				  channelLoading = false;
-			}
-
+        async function loadMessagesForChannel() {
+            try {
+                const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}`, {
+                    headers: {
+                        'Authorization': currentUser.token ? `Bearer ${currentUser.token}` : ''
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load messages');
+                }
+                
+                const data = await response.json();
+                messageList.innerHTML = '';
+                
+                // Add welcome message if no messages
+                if (data.messages.length === 0) {
+                    const welcomeDiv = document.createElement('div');
+                    welcomeDiv.className = 'message-enter mb-8 text-center';
+                    welcomeDiv.innerHTML = `
+                        <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
+                            <i class="fas fa-code text-3xl text-green-400"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to ${currentChannel}!</h3>
+                        <p class="text-gray-400">This is the start of the <span class="text-green-400">#${currentChannel}</span> channel.</p>
+                    `;
+                    messageList.appendChild(welcomeDiv);
+                }
+                
+                // Add messages to the chat
+                data.messages.forEach(msg => {
+                    addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned);
+                });
+                
+                // Scroll to bottom
+                messageList.scrollTop = messageList.scrollHeight;
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
         
-		messageList.addEventListener('scroll', async (e) => {
-		  if (channelLoading) return;
-		  if (messageList.scrollTop === 0) {
-			// load older messages if available
-			if (channelOffset <= 0) return; // nothing older
-			channelLoading = true;
-			const newOffset = Math.max(0, channelOffset - PAGE_SIZE);
-			const resp = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${newOffset}&limit=${channelOffset - newOffset}`);
-			const data = await resp.json();
-			// preserve scroll position after prepend
-			const prevHeight = messageList.scrollHeight;
-			// prepend DOM nodes for each message in data.messages (they are ascending)
-			data.messages.forEach(m => {
-			  prependMessageToChat(m.username, m.content, m.timestamp, m.pinned);
-			});
-			// compute new scroll to keep view at same message
-			const newHeight = messageList.scrollHeight;
-			messageList.scrollTop = newHeight - prevHeight;
-			channelOffset = newOffset;
-			channelLoading = false;
-		  } else {
-			// detect whether user near bottom
-			isAtBottom = (messageList.scrollTop + messageList.clientHeight >= messageList.scrollHeight - 50);
-		  }
-		});
-
-		
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
         function addMessageToChat(user, role, time, content, pinned = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
@@ -1018,14 +962,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     pinBtn.dataset.pinned = !isPinned;
                     messageDiv.classList.toggle('pinned-message');
                     
-                    // Update in messages array
-                    const msgIndex = messages[currentChannel].findIndex(msg => 
-                        msg.user === user && msg.content === content && msg.time === time
-                    );
-                    
-                    if (msgIndex !== -1) {
-                        messages[currentChannel][msgIndex].pinned = !isPinned;
-                    }
+                    // In a real app, you would update this on the server
+                    console.log(`Message ${isPinned ? 'unpinned' : 'pinned'}`);
                 });
             }
             
@@ -1035,41 +973,52 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault();
                     messageDiv.remove();
                     
-                    // Remove from messages array
-                    messages[currentChannel] = messages[currentChannel].filter(msg => 
-                        !(msg.user === user && msg.content === content && msg.time === time)
-                    );
+                    // In a real app, you would delete this on the server
+                    console.log('Message deleted');
                 });
             }
         }
         
-		async function sendMessageToServer(content) {
-		  if (!authToken) { alert('Please login'); return; }
-		  const payload = { channel: currentChannel, content };
-		  const resp = await fetch(`${API_BASE}/messages`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-			body: JSON.stringify(payload)
-		  });
-		  const data = await resp.json();
-		  if (!resp.ok) { alert(data.error || 'Send failed'); return; }
-
-		  // Insert message locally
-		  const msg = data.message;
-		  addMessageToChat(msg.username, currentUser.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.timestamp);
-
-		  // Auto-scroll if user was at bottom
-		  if (isAtBottom) {
-			messageList.scrollTop = messageList.scrollHeight;
-		  }
-		}
-
-			function formatTime(ts) {
-			  const d = new Date(ts);
-			  return `${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')} ${d.getHours() >= 12 ? 'PM' : 'AM'}`;
-			}
-
-
+        async function handleMessageInput(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                
+                const content = messageInput.value.trim();
+                if (!content) return;
+                
+                try {
+                    const response = await fetch(`${API_BASE}/messages`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${currentUser.token}`
+                        },
+                        body: JSON.stringify({
+                            channel: currentChannel,
+                            content,
+                            replyTo: replyToMessage ? replyToMessage.id : null
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to send message');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Add the message to the chat
+                    addMessageToChat(currentUser.username, currentUser.role, formatTime(Date.now()), content);
+                    
+                    // Clear input and reset reply
+                    messageInput.value = '';
+                    if (replyToMessage) {
+                        cancelMessageReply();
+                    }
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                }
+            }
+        }
         
         function showReplyIndicator(user, content) {
             replyToUser.textContent = user;
@@ -1091,42 +1040,44 @@ document.addEventListener('DOMContentLoaded', function() {
             const pinnedMessagesList = document.getElementById('pinnedMessagesList');
             pinnedMessagesList.innerHTML = '';
             
-            if (messages[currentChannel]) {
-                const pinnedMessages = messages[currentChannel].filter(msg => msg.pinned);
-                
-                if (pinnedMessages.length === 0) {
-                    pinnedMessagesList.innerHTML = '<p class="text-gray-400 text-center py-4">No pinned messages in this channel</p>';
-                } else {
-                    pinnedMessages.forEach(msg => {
-                        const pinnedMsgDiv = document.createElement('div');
-                        pinnedMsgDiv.className = 'pinned-message mb-4 p-3 rounded bg-gray-800';
-                        
-                        pinnedMsgDiv.innerHTML = `
-                            <div class="flex items-baseline mb-1">
-                                <span class="font-medium ${roles[msg.role].color} mr-2">${msg.user}</span>
-                                <span class="text-xs text-gray-500">${msg.time}</span>
-                            </div>
-                            <p class="text-gray-300">${msg.content}</p>
-                            <div class="flex justify-end mt-2">
-                                <button class="text-xs text-gray-400 hover:text-green-400 jump-btn" data-time="${msg.timestamp}">
-                                    <i class="fas fa-arrow-up mr-1"></i> Jump
-                                </button>
-                            </div>
-                        `;
-                        
-                        pinnedMessagesList.appendChild(pinnedMsgDiv);
-                        
-                        // Add jump button event
-                        const jumpBtn = pinnedMsgDiv.querySelector('.jump-btn');
-                        if (jumpBtn) {
-                            jumpBtn.addEventListener('click', () => {
-                                hidePinnedMessages();
-                                // Scroll to message (simplified for this example)
-                                alert('In a real app, this would scroll to the message');
-                            });
-                        }
-                    });
-                }
+            // In a real app, you would fetch pinned messages from the server
+            const pinnedMessages = [
+                { username: 'Admin', role: 'admin', content: 'Welcome to our secure chat platform!', time: '10:00 AM' },
+                { username: 'Moderator', role: 'moderator', content: 'Please read the rules before posting.', time: '11:30 AM' }
+            ];
+            
+            if (pinnedMessages.length === 0) {
+                pinnedMessagesList.innerHTML = '<p class="text-gray-400 text-center py-4">No pinned messages in this channel</p>';
+            } else {
+                pinnedMessages.forEach(msg => {
+                    const pinnedMsgDiv = document.createElement('div');
+                    pinnedMsgDiv.className = 'pinned-message mb-4 p-3 rounded bg-gray-800';
+                    
+                    pinnedMsgDiv.innerHTML = `
+                        <div class="flex items-baseline mb-1">
+                            <span class="font-medium ${roles[msg.role].color} mr-2">${msg.username}</span>
+                            <span class="text-xs text-gray-500">${msg.time}</span>
+                        </div>
+                        <p class="text-gray-300">${msg.content}</p>
+                        <div class="flex justify-end mt-2">
+                            <button class="text-xs text-gray-400 hover:text-green-400 jump-btn" data-time="${msg.time}">
+                                <i class="fas fa-arrow-up mr-1"></i> Jump
+                            </button>
+                        </div>
+                    `;
+                    
+                    pinnedMessagesList.appendChild(pinnedMsgDiv);
+                    
+                    // Add jump button event
+                    const jumpBtn = pinnedMsgDiv.querySelector('.jump-btn');
+                    if (jumpBtn) {
+                        jumpBtn.addEventListener('click', () => {
+                            hidePinnedMessages();
+                            // In a real app, this would scroll to the message
+                            console.log(`Jump to message at ${jumpBtn.dataset.time}`);
+                        });
+                    }
+                });
             }
             
             pinnedMessagesModal.classList.remove('hidden');
@@ -1149,44 +1100,44 @@ document.addEventListener('DOMContentLoaded', function() {
             createChannelForm.reset();
         }
         
-		async function handleCreateChannel(e) {
-		  e.preventDefault();
-		  const channelName = document.getElementById('channelName').value.trim().toLowerCase();
-		  const description = document.getElementById('channelDescription').value.trim();
-		  if (!channelName) return alert('enter a name');
-
-		  const resp = await fetch(`${API_BASE}/channels`, {
-			method: 'POST',
-			headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${authToken}` },
-			body: JSON.stringify({ name: channelName, description })
-		  });
-		  if (!resp.ok) {
-			const err = await resp.json();
-			return alert(err.error || 'Could not create channel');
-		  }
-		  // reload channels
-		  await loadChannelsFromServer();
-		  hideCreateChannelModal();
-		}
-		async function loadChannelsFromServer() {
-		  const resp = await fetch(`${API_BASE}/channels`);
-		  const chs = await resp.json();
-		  channels = chs.map(c => c.name);
-		  loadChannels(); // your existing render
-		}
-	function showAuthError(message) {
-	  const el = document.getElementById('authError');
-	  el.textContent = message;
-	  el.style.display = 'block';
-	}
-
-     
+        async function handleCreateChannel(e) {
+            e.preventDefault();
+            
+            const channelName = document.getElementById('channelName').value.trim();
+            const description = document.getElementById('channelDescription').value.trim();
+            
+            if (!channelName) {
+                alert('Please enter a channel name');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/channels`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUser.token}`
+                    },
+                    body: JSON.stringify({ name: channelName, description })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to create channel');
+                }
+                
+                const data = await response.json();
+                
+                // Add the new channel to our list
+                channels.push(data.name);
+                loadChannels();
+                
+                // Hide the modal and reset the form
+                hideCreateChannelModal();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
     </script>
 </body>
 </html>
-
-
-
-
-
-
