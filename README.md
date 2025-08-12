@@ -10,5 +10,5 @@ It is work in progress as well, so I'm not sure.
 - - Website Created
  - Version 1.05
  - - Made Backend files for messages, mainly saving messages and users for the whole server.
--Version 1.06
+- Version 1.06
 - - Bug fixes, logins work, messages are currently being fixed, the site is almost at a basic level of usability, and out of development.
