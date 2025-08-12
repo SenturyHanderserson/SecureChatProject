@@ -165,7 +165,7 @@
                 <div class="w-full bg-green-600 rounded-full h-2">
                     <div class="bg-white h-2 rounded-full animate-progress" style="width: 70%;"></div>
                 </div>
-                <span class="ml-3 text-xs text-green-100">60% complete</span>
+                <span class="ml-3 text-xs text-green-100">80% complete</span>
             </div>
             
             <div class="mt-4 flex space-x-2">
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 10000);
 });
 	
-	const API_BASE = 'http://neko.wisp.uno:13057/'; // change for production
+	const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api/endpoint'; // change for production
 	let authToken = localStorage.getItem('wb_token') || null;
 	let isAtBottom = true; // track whether user is at bottom
 	const PAGE_SIZE = 50;
@@ -608,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	  }
 
 	  try {
-		const response = await fetch('http://neko.wisp.uno:13057/signup', {
+		const response = await fetch('https://secure-chat-website-https-converter.onrender.com/api/endpoint', {
 		  method: 'POST',
 		  headers: { 'Content-Type': 'application/json' },
 		  body: JSON.stringify({ username, email, password }),
@@ -1119,5 +1119,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
