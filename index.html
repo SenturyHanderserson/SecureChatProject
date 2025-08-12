@@ -77,9 +77,110 @@
                 transform: translateY(0);
             }
         }
+    @keyframes progress {
+        0% { width: 70%; }
+        100% { width: 75%; }
+    }
+    
+    .animate-progress {
+        animation: progress 2s ease-in-out infinite alternate;
+    }
+	/* Development Notification Styles */
+@keyframes slideIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+.notification {
+    animation: slideIn 0.5s ease-out forwards;
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+.close-btn:hover {
+    transform: rotate(90deg);
+    transition: transform 0.3s ease;
+}
+
+.leaf {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 50% 0 50% 50%;
+    transform: rotate(-45deg);
+}
+
+.leaf-1 {
+    top: 10px;
+    left: 10px;
+    animation: float 4s ease-in-out infinite;
+}
+
+.leaf-2 {
+    bottom: 15px;
+    right: 15px;
+    animation: float 3s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+    0% { transform: translateY(0) rotate(-45deg); }
+    50% { transform: translateY(-10px) rotate(-45deg); }
+    100% { transform: translateY(0) rotate(-45deg); }
+}
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
+<div id="notification" class="notification fixed bottom-5 right-5 w-full max-w-md z-50 hidden">
+    <div class="relative bg-green-500 text-white rounded-lg shadow-xl overflow-hidden pulse">
+        <!-- Decorative leaves -->
+        <div class="leaf leaf-1"></div>
+        <div class="leaf leaf-2"></div>
+        
+        <div class="p-6">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white bg-opacity-20 p-3 rounded-full">
+                        <i class="fas fa-tools text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">Website Under Development</h3>
+                        <p class="text-green-100 text-sm">We're working hard to improve your experience. Sorry for any inconvenience!</p>
+                    </div>
+                </div>
+                <button id="close-btn" class="close-btn text-white hover:text-green-200 focus:outline-none transition-all">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mt-4 flex items-center">
+                <div class="w-full bg-green-600 rounded-full h-2">
+                    <div class="bg-white h-2 rounded-full animate-progress" style="width: 70%;"></div>
+                </div>
+                <span class="ml-3 text-xs text-green-100">40% complete</span>
+            </div>
+            
+            <div class="mt-4 flex space-x-2">
+                <div class="bg-green-600 bg-opacity-50 px-3 py-1 rounded-full text-xs flex items-center">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span>ETA: Soon</span>
+                </div>
+                <div class="bg-green-600 bg-opacity-50 px-3 py-1 rounded-full text-xs flex items-center">
+                    <i class="fas fa-bell mr-1"></i>
+                    <span>Updates coming</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <!-- Login/Signup Modal -->
     <div id="authModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
         <div class="modal bg-gray-900 rounded-lg p-8 w-full max-w-md border border-green-700">
@@ -314,6 +415,45 @@
     </div>
 
     <script>
+	
+	// Development Notification
+document.addEventListener('DOMContentLoaded', function() {
+    const notification = document.getElementById('notification');
+    const closeBtn = document.getElementById('close-btn');
+    
+    // Show notification after a small delay
+    setTimeout(() => {
+        notification.classList.remove('hidden');
+    }, 1000);
+    
+    // Close button functionality
+    closeBtn.addEventListener('click', function() {
+        notification.style.animation = 'slideIn 0.5s ease-out reverse forwards';
+        setTimeout(() => {
+            notification.remove();
+        }, 500);
+    });
+    
+    // Auto-close after 10 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideIn 0.5s ease-out reverse forwards';
+            setTimeout(() => {
+                notification.remove();
+            }, 500);
+        }
+    }, 10000);
+});
+	
+	const API_BASE = 'http://neko.wisp.uno:13057/'; // change for production
+	let authToken = localStorage.getItem('wb_token') || null;
+	let isAtBottom = true; // track whether user is at bottom
+	const PAGE_SIZE = 50;
+	let channelTotal = 0;
+	let channelOffset = 0; // current offset (0 = from start)
+	let channelLoading = false; // to avoid concurrent loads
+
+
         // Current user state
         let currentUser = {
             username: null,
@@ -435,63 +575,82 @@
             authError.classList.add('hidden');
         }
         
-        function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            // Simple validation
-            if (!username || !password) {
-                authError.textContent = 'Please enter both username and password';
-                authError.classList.remove('hidden');
-                return;
-            }
-            
-            // In a real app, this would be an API call to your backend
-            // For local mode, we'll just create a user session
-            currentUser = {
-                username: username,
-                role: username.toLowerCase() === 'admin' ? 'admin' : 'member',
-                token: 'local-' + Date.now()
-            };
-            
-            // Save to localStorage for persistence
-            localStorage.setItem('chatUser', JSON.stringify(currentUser));
-            
-            successfulLogin();
-        }
-        
-        function handleSignup(e) {
-            e.preventDefault();
-            const username = document.getElementById('signupUsername').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            
-            if (!username || !email || !password) {
-                authError.textContent = 'Please fill in all fields';
-                authError.classList.remove('hidden');
-                return;
-            }
-            
-            currentUser = {
-                username: username,
-                role: 'member',
-                email: email,
-                token: 'local-' + Date.now()
-            };
-            
-            // Add to users list
-            users.push({
-                username: username,
-                role: 'member',
-                online: true
-            });
-            
-            // Save to localStorage
-            localStorage.setItem('chatUser', JSON.stringify(currentUser));
-            
-            successfulLogin();
-        }
+		async function handleLogin(e) {
+		  e.preventDefault();
+		  const username = document.getElementById('loginUsername').value.trim();
+		  const password = document.getElementById('loginPassword').value;
+		  if (!username || !password) { showAuthError('Missing fields'); return; }
+
+		  const resp = await fetch(`${API_BASE}/login`, {
+			method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username, password })
+		  });
+		  const data = await resp.json();
+		  if (!resp.ok) { showAuthError(data.error || 'Login failed'); return; }
+
+		  authToken = data.token;
+		  localStorage.setItem('wb_token', authToken);
+		  currentUser = { username: data.username, role: data.role };
+		  successfulLogin(); // your existing UI changes
+		  // mark online
+		  await updateOnlineStatus(true);
+		}
+
+		async function handleSignup(e) {
+		  e.preventDefault();
+		  const username = document.getElementById('signupUsername').value.trim();
+		  const email = document.getElementById('signupEmail').value;
+		  const password = document.getElementById('signupPassword').value;
+		  if (!username || !email || !password) { showAuthError('Missing fields'); return; }
+
+		  const resp = await fetch(`${API_BASE}/signup`, {
+			method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username, password, email })
+		  });
+		  const data = await resp.json();
+		  if (!resp.ok) { showAuthError(data.error || 'Signup failed'); return; }
+
+		  authToken = data.token;
+		  localStorage.setItem('wb_token', authToken);
+		  currentUser = { username: data.username, role: data.role };
+		  successfulLogin();
+		  await updateOnlineStatus(true);
+		}
+
+		async function handleLogout() {
+		  if (authToken) {
+			await fetch(`${API_BASE}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` } }).catch(()=>{});
+		  }
+		  localStorage.removeItem('wb_token');
+		  authToken = null;
+		  // existing UI reset code
+		  currentUser = { username: null, role: 'guest', token: null };
+		  successfulLogoutUI();
+		}
+
+        async function updateOnlineStatus(online = true) {
+		  // For simplicity, we just toggle server-side online flag via login/logout.
+		  // To keep UI updated, fetch /users periodically.
+		  // Optionally you can create a /status endpoint to POST heartbeat.
+		  try {
+			// We'll refresh user list after status change
+			await loadUsersFromServer();
+		  } catch (e) { console.warn(e); }
+		}
+
+		// Poll users every 15 seconds to update online/offline UI
+		setInterval(() => {
+		  if (appContainer.classList.contains('hidden')) return;
+		  loadUsersFromServer();
+		}, 15000);
+
+		async function loadUsersFromServer() {
+		  const h = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+		  const resp = await fetch(`${API_BASE}/users`, { headers: h });
+		  if (!resp.ok) return;
+		  const usersFromServer = await resp.json();
+		  users = usersFromServer; // replace local users array so your UI functions can use it
+		  loadUsers(); // existing function that reads 'users' to render
+		}
+
         
         function successfulLogin() {
             authModal.classList.add('hidden');
@@ -659,38 +818,65 @@
             });
         }
         
-        function loadMessagesForChannel() {
-            messageList.innerHTML = '';
-            
-            // Add welcome message
-            const welcomeMsg = document.createElement('div');
-            welcomeMsg.className = 'message-enter mb-8 text-center';
-            
-            welcomeMsg.innerHTML = `
-                <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
-                    <i class="fas fa-code text-3xl text-green-400"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to #${currentChannel}!</h3>
-                <p class="text-gray-400">This is the start of the <span class="text-green-400">#${currentChannel}</span> channel.</p>
-            `;
-            
-            messageList.appendChild(welcomeMsg);
-            
-            // Add messages with staggered animations
-            if (messages[currentChannel]) {
-                messages[currentChannel].forEach((msg, index) => {
-                    setTimeout(() => {
-                        addMessageToChat(msg.user, msg.role, msg.time, msg.content, msg.pinned);
-                    }, index * 50);
-                });
-            }
-            
-            // Scroll to bottom
-            setTimeout(() => {
-                messageList.scrollTop = messageList.scrollHeight;
-            }, 100);
-        }
+			async function loadMessagesForChannel() {
+				  // reset paging
+				  messageList.innerHTML = '';
+				  const channel = currentChannel;
+				  channelOffset = 0; // start from 0; we will compute offset to return last PAGE_SIZE
+				  channelLoading = true;
+
+				  // fetch channel total first
+				  const resp1 = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(channel)}&offset=0&limit=1`);
+				  const meta = await resp1.json().catch(()=>null);
+				  // Instead rely on the messages endpoint to return total; fetch last PAGE_SIZE chunk instead.
+
+				  // get total via a request for entire list length (inefficient) OR better: endpoint returns total (the server does).
+				  const resp2 = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(channel)}&offset=0&limit=1`);
+				  const j2 = await resp2.json();
+				  channelTotal = j2.total || 0;
+
+				  // compute offset for last PAGE_SIZE messages
+				  const start = Math.max(0, channelTotal - PAGE_SIZE);
+				  channelOffset = start;
+
+				  const resp = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(channel)}&offset=${start}&limit=${PAGE_SIZE}`);
+				  const data = await resp.json();
+				  // data.messages is ascending. Render them.
+				  messageList.innerHTML = ''; // remove welcome if desired
+				  data.messages.forEach(msg => addMessageToChat(msg.username, 'member', formatTime(msg.timestamp), msg.content, msg.pinned, msg.timestamp));
+				  // After initial load, go to bottom
+				  messageList.scrollTop = messageList.scrollHeight;
+				  channelLoading = false;
+			}
+
         
+		messageList.addEventListener('scroll', async (e) => {
+		  if (channelLoading) return;
+		  if (messageList.scrollTop === 0) {
+			// load older messages if available
+			if (channelOffset <= 0) return; // nothing older
+			channelLoading = true;
+			const newOffset = Math.max(0, channelOffset - PAGE_SIZE);
+			const resp = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${newOffset}&limit=${channelOffset - newOffset}`);
+			const data = await resp.json();
+			// preserve scroll position after prepend
+			const prevHeight = messageList.scrollHeight;
+			// prepend DOM nodes for each message in data.messages (they are ascending)
+			data.messages.forEach(m => {
+			  prependMessageToChat(m.username, m.content, m.timestamp, m.pinned);
+			});
+			// compute new scroll to keep view at same message
+			const newHeight = messageList.scrollHeight;
+			messageList.scrollTop = newHeight - prevHeight;
+			channelOffset = newOffset;
+			channelLoading = false;
+		  } else {
+			// detect whether user near bottom
+			isAtBottom = (messageList.scrollTop + messageList.clientHeight >= messageList.scrollHeight - 50);
+		  }
+		});
+
+		
         function addMessageToChat(user, role, time, content, pinned = false) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
@@ -777,41 +963,33 @@
             }
         }
         
-        function handleMessageInput(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                const message = messageInput.value.trim();
-                if (!message) return;
-                
-                const now = new Date();
-                const timeString = `Today at ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
-                
-                // Create message object
-                const msg = {
-                    user: currentUser.username,
-                    role: currentUser.role,
-                    time: timeString,
-                    content: message,
-                    pinned: false,
-                    timestamp: Date.now()
-                };
-                
-                // Add to local storage
-                if (!messages[currentChannel]) {
-                    messages[currentChannel] = [];
-                }
-                messages[currentChannel].push(msg);
-                
-                // Add to chat
-                addMessageToChat(currentUser.username, currentUser.role, timeString, message);
-                
-                // In a real app, this would send to server
-                // sendMessageToServer(msg);
-                
-                messageInput.value = '';
-                if (replyToMessage) cancelMessageReply();
-            }
-        }
+		async function sendMessageToServer(content) {
+		  if (!authToken) { alert('Please login'); return; }
+		  const payload = { channel: currentChannel, content };
+		  const resp = await fetch(`${API_BASE}/messages`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+			body: JSON.stringify(payload)
+		  });
+		  const data = await resp.json();
+		  if (!resp.ok) { alert(data.error || 'Send failed'); return; }
+
+		  // Insert message locally
+		  const msg = data.message;
+		  addMessageToChat(msg.username, currentUser.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.timestamp);
+
+		  // Auto-scroll if user was at bottom
+		  if (isAtBottom) {
+			messageList.scrollTop = messageList.scrollHeight;
+		  }
+		}
+
+			function formatTime(ts) {
+			  const d = new Date(ts);
+			  return `${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')} ${d.getHours() >= 12 ? 'PM' : 'AM'}`;
+			}
+
+
         
         function showReplyIndicator(user, content) {
             replyToUser.textContent = user;
@@ -891,31 +1069,32 @@
             createChannelForm.reset();
         }
         
-        function handleCreateChannel(e) {
-            e.preventDefault();
-            const channelName = document.getElementById('channelName').value.trim().toLowerCase();
-            const description = document.getElementById('channelDescription').value.trim();
-            
-            if (!channelName) {
-                alert('Please enter a channel name');
-                return;
-            }
-            
-            if (channels.includes(channelName)) {
-                alert('Channel already exists');
-                return;
-            }
-            
-            // Add new channel
-            channels.push(channelName);
-            messages[channelName] = [];
-            
-            // Reload channels
-            loadChannels();
-            
-            // Close modal and reset form
-            hideCreateChannelModal();
-        }
+		async function handleCreateChannel(e) {
+		  e.preventDefault();
+		  const channelName = document.getElementById('channelName').value.trim().toLowerCase();
+		  const description = document.getElementById('channelDescription').value.trim();
+		  if (!channelName) return alert('enter a name');
+
+		  const resp = await fetch(`${API_BASE}/channels`, {
+			method: 'POST',
+			headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${authToken}` },
+			body: JSON.stringify({ name: channelName, description })
+		  });
+		  if (!resp.ok) {
+			const err = await resp.json();
+			return alert(err.error || 'Could not create channel');
+		  }
+		  // reload channels
+		  await loadChannelsFromServer();
+		  hideCreateChannelModal();
+		}
+		async function loadChannelsFromServer() {
+		  const resp = await fetch(`${API_BASE}/channels`);
+		  const chs = await resp.json();
+		  channels = chs.map(c => c.name);
+		  loadChannels(); // your existing render
+		}
+
         
         // Simulate server communication in local mode
         function sendMessageToServer(msg) {
