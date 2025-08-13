@@ -460,6 +460,7 @@
         let channelOffset = 0;
         let channelLoading = false;
         const PAGE_SIZE = 50;
+		let ws;
         
         // User roles and their display properties with fallback
         const roles = {
@@ -680,6 +681,7 @@
             loadChannels();
             loadUsers();
             loadMessagesForChannel();
+			setupWebSocket();
             messageInput.disabled = false;
             
             // Clear forms
@@ -691,6 +693,35 @@
             authError.classList.add('hidden');
         }
         
+		function setupWebSocket() {
+			const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+			const wsUrl = `${wsProtocol}//${location.hostname}:${location.port || 13057}`;
+			ws = new WebSocket(wsUrl);
+
+			ws.onopen = () => {
+				console.log('Connected to WebSocket server');
+			};
+
+			ws.onmessage = (event) => {
+				try {
+					const data = JSON.parse(event.data);
+					if (data.type === 'new_message' && data.channel === currentChannel) {
+						const msg = data.message;
+						addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
+						channelTotal++;
+					}
+				} catch (err) {
+					console.error('WebSocket message error:', err);
+				}
+			};
+
+			ws.onclose = () => {
+				console.warn('WebSocket closed, retrying in 3s...');
+				setTimeout(setupWebSocket, 3000);
+			};
+		}
+
+		
         async function handleLogout() {
             try {
                 await fetch(`${API_BASE}/logout`, {
