@@ -485,9 +485,8 @@
 
     <script>
         const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api';
-		const socket = new WebSocket('wss://secure-chat-website-https-converter.onrender.com/api'); 
+        const socket = new WebSocket('wss://secure-chat-website-https-converter.onrender.com/api'); 
 
-        
         // Current user state
         let currentUser = {
             username: null,
@@ -502,14 +501,14 @@
         let channelOffset = 0;
         let channelLoading = false;
         const PAGE_SIZE = 50;
-        let messagePollingInterval = null;
-        let lastMessageId = null;
-        
+        const seenMessageIds = new Set();
+
         // User roles and their display properties with fallback
         const roles = {
             admin: { name: 'Admin', color: 'role-admin' },
             moderator: { name: 'Moderator', color: 'role-moderator' },
             member: { name: 'Member', color: 'role-member' },
+            owner: { name: 'Owner', color: 'role-owner' },
             guest: { name: 'Guest', color: 'role-guest' },
             default: { name: 'User', color: 'text-gray-400' }
         };
@@ -573,6 +572,38 @@
         messagesContainer.addEventListener('scroll', handleScroll);
         newMessageNotification.addEventListener('click', scrollToBottom);
         
+        // WebSocket event listener
+        socket.addEventListener('message', (event) => {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === 'newMessage') {
+                const message = msg.data;
+
+                // Only process if message is for current channel
+                if (message.channel === currentChannel) {
+                    // Check for duplicates before adding
+                    if (!document.querySelector(`[data-message-id="${message.id}"]`)) {
+                        addMessageToChat(
+                            message.username,
+                            message.role,
+                            formatTime(message.timestamp),
+                            message.content,
+                            message.pinned,
+                            message.id
+                        );
+                        
+                        // Update last message ID
+                        lastMessageId = message.id;
+                        
+                        // Show notification if not at bottom
+                        if (!isScrollAtBottom()) {
+                            showNewMessageNotification(1);
+                        }
+                    }
+                }
+            }
+        });
+
         // Initialize the app
         initApp();
         
@@ -580,40 +611,30 @@
             // Check for existing session
             checkAutoLogin();
             
-            // Set up periodic updates
+            // Set up periodic user updates
             setInterval(loadUsers, 30000); // Update users every 30 seconds
-            
-            // Handle tab visibility changes
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    // Tab is inactive - slow down checks
-                    if (messagePollingInterval) clearInterval(messagePollingInterval);
-                    messagePollingInterval = setInterval(checkForNewMessages, 15000); // 15 seconds when inactive
-                } else {
-                    // Tab is active - resume normal checks
-                    if (messagePollingInterval) clearInterval(messagePollingInterval);
-                    messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
-                }
-            });
         }
         
-        function startMessagePolling() {
-            // Clear any existing interval
-            if (messagePollingInterval) {
-                clearInterval(messagePollingInterval);
-            }
-            
-            // Start polling for new messages
-            messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
+        function isScrollAtBottom() {
+            const container = messagesContainer;
+            return container.scrollHeight - container.scrollTop - container.clientHeight < 50;
         }
         
-        function getPollingInterval() {
-            if (navigator.connection) {
-                if (navigator.connection.saveData || navigator.connection.effectiveType === '2g') {
-                    return 10000; // 10 seconds for slow connections
+        function showNewMessageNotification(count) {
+            newMessageText.textContent = count === 1 ? '1 new message' : `${count} new messages`;
+            newMessageNotification.classList.remove('hidden');
+            
+            // Hide after 5 seconds if not clicked
+            setTimeout(() => {
+                if (!newMessageNotification.classList.contains('hidden')) {
+                    newMessageNotification.classList.add('hidden');
                 }
-            }
-            return 3000; // default 3 seconds
+            }, 5000);
+        }
+        
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            newMessageNotification.classList.add('hidden');
         }
         
         async function checkAutoLogin() {
@@ -761,9 +782,6 @@
             loadMessagesForChannel();
             messageInput.disabled = false;
             
-            // Start polling for new messages
-            startMessagePolling();
-            
             // Clear forms
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
@@ -773,91 +791,6 @@
             authError.classList.add('hidden');
         }
         
-        async function checkForNewMessages() {
-            try {
-                // Only fetch messages newer than our last known message
-                const response = await fetch(
-                    `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&after=${lastMessageId || ''}`,
-                    { credentials: 'include' }
-                );
-                
-                if (!response.ok) {
-                    console.error('Failed to check for new messages:', response.status);
-                    return;
-                }
-
-                const data = await response.json();
-                
-                // If we have new messages, add them to the UI
-                if (data.messages && data.messages.length > 0) {
-                    // Update lastMessageId to the newest message
-                    lastMessageId = data.messages[data.messages.length - 1].id;
-                    
-                    // Check if we're scrolled to bottom
-                    const wasAtBottom = isScrollAtBottom();
-                    
-                    // Add messages to the UI
-                    data.messages.forEach(msg => {
-                        if (!document.querySelector(`[data-message-id="${msg.id}"]`)) {
-                            addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-                        }
-                    });
-                    
-                    // Show notification if not at bottom
-                    if (!wasAtBottom) {
-                        showNewMessageNotification(data.messages.length);
-                    }
-                }
-            } catch (err) {
-                console.error("Auto-refresh error:", err);
-            }
-        }
-        
-        function isScrollAtBottom() {
-            const container = messagesContainer;
-            return container.scrollHeight - container.scrollTop - container.clientHeight < 50;
-        }
-        
-        function showNewMessageNotification(count) {
-            newMessageText.textContent = count === 1 ? '1 new message' : `${count} new messages`;
-            newMessageNotification.classList.remove('hidden');
-            
-            // Hide after 5 seconds if not clicked
-            setTimeout(() => {
-                if (!newMessageNotification.classList.contains('hidden')) {
-                    newMessageNotification.classList.add('hidden');
-                }
-            }, 5000);
-        }
-        
-        function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            newMessageNotification.classList.add('hidden');
-        }
-        
-		socket.addEventListener('message', (event) => {
-		  const msg = JSON.parse(event.data);
-
-		  if (msg.type === 'newMessage') {
-			const message = msg.data;
-
-			// Optionally check if message is for the current channel
-			if (message.channel === currentChannel || !currentChannel) { 
-			  // Avoid duplicate messages in DOM
-			  if (!document.querySelector(`[data-message-id="${message.timestamp}"]`)) {
-				addMessageToChat(
-				  message.username, 
-				  message.role, 
-				  formatTime(message.timestamp), 
-				  message.content, 
-				  message.pinned, 
-				  message.timestamp
-				);
-			  }
-			}
-		  }
-		});
-
         async function handleLogout() {
             try {
                 await fetch(`${API_BASE}/logout`, {
@@ -872,12 +805,6 @@
                     role: 'guest',
                     token: null
                 };
-                
-                // Clear polling interval
-                if (messagePollingInterval) {
-                    clearInterval(messagePollingInterval);
-                    messagePollingInterval = null;
-                }
                 
                 appContainer.classList.add('hidden');
                 authModal.classList.remove('hidden');
@@ -964,13 +891,8 @@
             currentChannelDisplay.textContent = channelName;
             highlightCurrentChannel();
             
-            // Stop any existing refresh interval
-            if (messagePollingInterval) clearInterval(messagePollingInterval);
-            
-            // Load messages and then start refreshing
-            loadMessagesForChannel().then(() => {
-                startMessagePolling();
-            });
+            // Load messages for the new channel
+            loadMessagesForChannel();
         }
         
         async function loadUsers() {
