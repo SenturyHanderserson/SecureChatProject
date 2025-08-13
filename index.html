@@ -194,6 +194,31 @@
         color: #6b7280;
         font-size: 0.875rem;
     }
+    
+    /* New message notification */
+    .new-message-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: rgba(46, 204, 113, 0.9);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    .new-message-notification:hover {
+        background-color: rgba(46, 204, 113, 1);
+    }
+    
+    .new-message-notification i {
+        margin-right: 8px;
+    }
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
@@ -205,6 +230,12 @@
             <div class="dot bounce-2"></div>
             <div class="dot bounce-3"></div>
         </div>
+    </div>
+
+    <!-- New Message Notification -->
+    <div id="newMessageNotification" class="new-message-notification hidden">
+        <i class="fas fa-comment-alt"></i>
+        <span id="newMessageText">New messages</span>
     </div>
 
     <!-- Login/Signup Modal -->
@@ -460,6 +491,10 @@
         let channelOffset = 0;
         let channelLoading = false;
         const PAGE_SIZE = 50;
+        let messagePollingInterval;
+        let lastMessageId = null;
+        let isScrolledToBottom = true;
+        let unreadMessages = {};
         
         // User roles and their display properties with fallback
         const roles = {
@@ -509,6 +544,8 @@
         const closeCreateChannelModal = document.getElementById('closeCreateChannelModal');
         const createChannelForm = document.getElementById('createChannelForm');
         const signingInNotification = document.getElementById('signingInNotification');
+        const newMessageNotification = document.getElementById('newMessageNotification');
+        const newMessageText = document.getElementById('newMessageText');
         
         // Event Listeners
         toggleAuth.addEventListener('click', toggleAuthForms);
@@ -525,6 +562,7 @@
         closeCreateChannelModal.addEventListener('click', hideCreateChannelModal);
         createChannelForm.addEventListener('submit', handleCreateChannel);
         messagesContainer.addEventListener('scroll', handleScroll);
+        newMessageNotification.addEventListener('click', scrollToBottom);
         
         // Initialize the app
         initApp();
@@ -682,6 +720,9 @@
             loadMessagesForChannel();
             messageInput.disabled = false;
             
+            // Start polling for new messages
+            startMessagePolling();
+            
             // Clear forms
             document.getElementById('loginUsername').value = '';
             document.getElementById('loginPassword').value = '';
@@ -689,6 +730,73 @@
             document.getElementById('signupEmail').value = '';
             document.getElementById('signupPassword').value = '';
             authError.classList.add('hidden');
+        }
+        
+        function startMessagePolling() {
+            // Clear any existing interval
+            if (messagePollingInterval) {
+                clearInterval(messagePollingInterval);
+            }
+            
+            // Start polling for new messages every 3 seconds
+            messagePollingInterval = setInterval(checkForNewMessages, 3000);
+        }
+        
+        async function checkForNewMessages() {
+            try {
+                // Only check if we have a last message ID to compare against
+                if (lastMessageId) {
+                    const response = await fetch(`${API_BASE}/messages/new?channel=${encodeURIComponent(currentChannel)}&lastId=${lastMessageId}`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) throw new Error('Failed to check for new messages');
+                    
+                    const data = await response.json();
+                    
+                    if (data.messages && data.messages.length > 0) {
+                        // Update last message ID
+                        lastMessageId = data.messages[data.messages.length - 1].id;
+                        
+                        // Check if user is scrolled to bottom
+                        const isAtBottom = isScrollAtBottom();
+                        
+                        // Add new messages to chat
+                        data.messages.forEach(msg => {
+                            addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
+                        });
+                        
+                        // If not at bottom, show notification
+                        if (!isAtBottom) {
+                            showNewMessageNotification(data.messages.length);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking for new messages:', error);
+            }
+        }
+        
+        function isScrollAtBottom() {
+            const container = messagesContainer;
+            return container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+        }
+        
+        function showNewMessageNotification(count) {
+            newMessageText.textContent = count === 1 ? '1 new message' : `${count} new messages`;
+            newMessageNotification.classList.remove('hidden');
+            
+            // Hide after 5 seconds if not clicked
+            setTimeout(() => {
+                if (!newMessageNotification.classList.contains('hidden')) {
+                    newMessageNotification.classList.add('hidden');
+                }
+            }, 5000);
+        }
+        
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            newMessageNotification.classList.add('hidden');
         }
         
         async function handleLogout() {
@@ -705,6 +813,12 @@
                     role: 'guest',
                     token: null
                 };
+                
+                // Clear polling interval
+                if (messagePollingInterval) {
+                    clearInterval(messagePollingInterval);
+                    messagePollingInterval = null;
+                }
                 
                 appContainer.classList.add('hidden');
                 authModal.classList.remove('hidden');
@@ -768,6 +882,9 @@
                         currentChannelDisplay.textContent = channel.name;
                         highlightCurrentChannel();
                         loadMessagesForChannel();
+                        
+                        // Hide new message notification when switching channels
+                        newMessageNotification.classList.add('hidden');
                     });
                 });
                 
@@ -876,6 +993,7 @@
                 channelTotal = 0;
                 messageList.innerHTML = '';
                 loadingMore.classList.add('hidden');
+                lastMessageId = null;
                 
                 // First get the total count
                 const countResponse = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=0&limit=1`, {
@@ -914,6 +1032,7 @@
                 
                 data.messages.forEach(msg => {
                     addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
+                    lastMessageId = msg.id;
                 });
                 
                 setTimeout(() => {
@@ -977,7 +1096,7 @@
             messageList.appendChild(messageElement);
             
             // Auto-scroll to bottom if we're near the bottom
-            const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 100;
+            const isNearBottom = isScrollAtBottom();
             if (isNearBottom) {
                 setTimeout(() => {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1108,6 +1227,9 @@
                         const errorData = await response.json().catch(() => ({}));
                         throw new Error(errorData.error || 'Failed to send message');
                     }
+                    
+                    const data = await response.json();
+                    lastMessageId = data.id; // Update last message ID
                     
                     messageInput.value = '';
                     cancelMessageReply();
