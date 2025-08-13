@@ -485,6 +485,8 @@
 
     <script>
         const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api';
+		const socket = new WebSocket('wss://secure-chat-website-https-converter.onrender.com/api'); 
+
         
         // Current user state
         let currentUser = {
@@ -833,6 +835,29 @@
             newMessageNotification.classList.add('hidden');
         }
         
+		socket.addEventListener('message', (event) => {
+		  const msg = JSON.parse(event.data);
+
+		  if (msg.type === 'newMessage') {
+			const message = msg.data;
+
+			// Optionally check if message is for the current channel
+			if (message.channel === currentChannel || !currentChannel) { 
+			  // Avoid duplicate messages in DOM
+			  if (!document.querySelector(`[data-message-id="${message.timestamp}"]`)) {
+				addMessageToChat(
+				  message.username, 
+				  message.role, 
+				  formatTime(message.timestamp), 
+				  message.content, 
+				  message.pinned, 
+				  message.timestamp
+				);
+			  }
+			}
+		  }
+		});
+
         async function handleLogout() {
             try {
                 await fetch(`${API_BASE}/logout`, {
