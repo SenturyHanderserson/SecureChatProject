@@ -461,13 +461,19 @@
         let channelLoading = false;
         const PAGE_SIZE = 50;
         
-        // User roles and their display properties
+        // User roles and their display properties with fallback
         const roles = {
             admin: { name: 'Admin', color: 'role-admin' },
             moderator: { name: 'Moderator', color: 'role-moderator' },
             member: { name: 'Member', color: 'role-member' },
-            guest: { name: 'Guest', color: 'role-guest' }
+            guest: { name: 'Guest', color: 'role-guest' },
+            default: { name: 'User', color: 'text-gray-400' } // Fallback for unknown roles
         };
+
+        // Helper function to safely get role properties
+        function getRoleInfo(role) {
+            return roles[role] || roles.default;
+        }
         
         // DOM Elements
         const authModal = document.getElementById('authModal');
@@ -715,8 +721,9 @@
         function updateUserDisplay() {
             if (currentUser.username) {
                 currentUsername.textContent = currentUser.username;
-                currentUsername.className = 'font-medium ' + roles[currentUser.role].color;
-                currentUserRole.textContent = roles[currentUser.role].name;
+                const roleInfo = getRoleInfo(currentUser.role);
+                currentUsername.className = 'font-medium ' + roleInfo.color;
+                currentUserRole.textContent = roleInfo.name;
             } else {
                 currentUsername.textContent = 'Guest';
                 currentUsername.className = 'font-medium text-gray-400';
@@ -806,7 +813,8 @@
                     statusDot.className = `w-3 h-3 rounded-full mr-2 ${user.online ? 'bg-green-500' : 'bg-gray-500'}`;
                     
                     const usernameSpan = document.createElement('span');
-                    usernameSpan.className = roles[user.role].color;
+                    const roleInfo = getRoleInfo(user.role);
+                    usernameSpan.className = roleInfo.color;
                     usernameSpan.textContent = user.username;
                     
                     userDiv.appendChild(statusDot);
@@ -837,10 +845,11 @@
             onlineUsers.forEach(user => {
                 const memberItem = document.createElement('li');
                 memberItem.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800 cursor-pointer';
+                const roleInfo = getRoleInfo(user.role);
                 
                 memberItem.innerHTML = `
                     <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                    <span class="${roles[user.role].color}">${user.username}</span>
+                    <span class="${roleInfo.color}">${user.username}</span>
                     ${user.role === 'admin' ? '<span class="ml-auto text-xs text-gray-500">Owner</span>' : ''}
                 `;
                 
@@ -850,10 +859,11 @@
             offlineUsers.forEach(user => {
                 const memberItem = document.createElement('li');
                 memberItem.className = 'flex items-center py-1 px-2 rounded hover:bg-gray-800 cursor-pointer';
+                const roleInfo = getRoleInfo(user.role);
                 
                 memberItem.innerHTML = `
                     <div class="w-2 h-2 rounded-full bg-gray-500 mr-2"></div>
-                    <span class="${roles[user.role].color}">${user.username}</span>
+                    <span class="${roleInfo.color}">${user.username}</span>
                 `;
                 
                 offlineMembersList.appendChild(memberItem);
@@ -980,6 +990,8 @@
             messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
             messageDiv.dataset.messageId = messageId;
             
+            const roleInfo = getRoleInfo(role);
+            
             messageDiv.innerHTML = `
                 <div class="flex items-start">
                     <div class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center mr-3 mt-1">
@@ -987,7 +999,7 @@
                     </div>
                     <div class="flex-1">
                         <div class="flex items-baseline">
-                            <span class="font-medium mr-2 ${roles[role].color}">${username}</span>
+                            <span class="font-medium mr-2 ${roleInfo.color}">${username}</span>
                             <span class="text-xs text-gray-500">${time}</span>
                             ${pinned ? '<span class="ml-2 text-xs text-yellow-400"><i class="fas fa-thumbtack mr-1"></i>Pinned</span>' : ''}
                         </div>
@@ -1088,18 +1100,44 @@
                         body: JSON.stringify({
                             channel: currentChannel,
                             content: replyToMessage ? `@${replyToUser.textContent} ${content}` : content,
-                            replyTo: replyToMessage || null
+                            replyTo: replyToMessage || undefined
                         })
                     });
                     
-                    if (!response.ok) throw new Error('Failed to send message');
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || 'Failed to send message');
+                    }
                     
                     messageInput.value = '';
                     cancelMessageReply();
                     
-                    // The message will appear when we get it from the server
+                    // Show success message
+                    const successElement = document.createElement('div');
+                    successElement.className = 'text-green-400 mb-2 text-sm';
+                    successElement.textContent = 'Message sent!';
+                    messageInput.parentNode.insertBefore(successElement, messageInput);
+                    
+                    // Remove success message after 3 seconds
+                    setTimeout(() => {
+                        if (successElement.parentNode) {
+                            successElement.parentNode.removeChild(successElement);
+                        }
+                    }, 3000);
                 } catch (error) {
                     console.error('Error sending message:', error);
+                    // Show error to user
+                    const errorElement = document.createElement('div');
+                    errorElement.className = 'text-red-400 mb-2 text-sm';
+                    errorElement.textContent = `Error: ${error.message}`;
+                    messageInput.parentNode.insertBefore(errorElement, messageInput);
+                    
+                    // Remove error after 5 seconds
+                    setTimeout(() => {
+                        if (errorElement.parentNode) {
+                            errorElement.parentNode.removeChild(errorElement);
+                        }
+                    }, 5000);
                 }
             }
         }
