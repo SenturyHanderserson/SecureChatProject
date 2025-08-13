@@ -771,46 +771,49 @@
             authError.classList.add('hidden');
         }
         
-        async function checkForNewMessages() {
-            try {
-                // Only fetch messages newer than our last known message
-                const response = await fetch(
-                    `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&after=${lastMessageId || ''}`,
-                    { credentials: 'include' }
-                );
-                
-                if (!response.ok) {
-                    console.error('Failed to check for new messages:', response.status);
-                    return;
-                }
+	let lastMessageCount = 0; // Track how many messages we got already
 
-                const data = await response.json();
-                
-                // If we have new messages, add them to the UI
-                if (data.messages && data.messages.length > 0) {
-                    // Update lastMessageId to the newest message
-                    lastMessageId = data.messages[data.messages.length - 1].id;
-                    
-                    // Check if we're scrolled to bottom
-                    const wasAtBottom = isScrollAtBottom();
-                    
-                    // Add messages to the UI
-                    data.messages.forEach(msg => {
-                        if (!document.querySelector(`[data-message-id="${msg.id}"]`)) {
-                            addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-                        }
-                    });
-                    
-                    // Show notification if not at bottom
-                    if (!wasAtBottom) {
-                        showNewMessageNotification(data.messages.length);
-                    }
-                }
-            } catch (err) {
-                console.error("Auto-refresh error:", err);
-            }
-        }
-        
+	async function checkForNewMessages() {
+	  try {
+		const response = await fetch(
+		  `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${lastMessageCount}&limit=50`,
+		  { credentials: 'include' }
+		);
+
+		if (!response.ok) {
+		  console.error('Failed to check for new messages:', response.status);
+		  return;
+		}
+
+		const data = await response.json();
+
+		if (data.messages && data.messages.length > 0) {
+		  // Add the number of new messages to our count
+		  lastMessageCount += data.messages.length;
+
+		  // Check if user is scrolled at bottom
+		  const wasAtBottom = isScrollAtBottom();
+
+		  // Loop through and add new messages if not already in DOM
+		  data.messages.forEach(msg => {
+			if (!document.querySelector(`[data-message-id="${msg.timestamp}"]`)) {
+			  addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.timestamp);
+			}
+		  });
+
+		  // Notify user if not at bottom
+		  if (!wasAtBottom) {
+			showNewMessageNotification(data.messages.length);
+		  }
+		}
+	  } catch (err) {
+		console.error("Auto-refresh error:", err);
+	  }
+	}
+
+	// Call this repeatedly every 2-3 seconds to keep fetching
+	setInterval(checkForNewMessages, 2500);
+
         function isScrollAtBottom() {
             const container = messagesContainer;
             return container.scrollHeight - container.scrollTop - container.clientHeight < 50;
