@@ -15,7 +15,7 @@ An unblocked alternative to Discord.
 - Private channels
 - Communities/Servers
 - More roles
-- Bug fixes (please send any bugs to the #bug-fixes channel
+- Bug fixes (please send any bugs to the #bug-fixes channel)
 # Info
 - It is work in progress as well, so more features are to come.
 - This is currently a single dev project, so please be patient with me.
