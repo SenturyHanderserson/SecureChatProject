@@ -773,46 +773,50 @@
         
 	let lastMessageCount = 0; // Track how many messages we got already
 
-	async function checkForNewMessages() {
-	  try {
-		const response = await fetch(
-		  `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${lastMessageCount}&limit=50`,
-		  { credentials: 'include' }
-		);
+let lastMessageId = null;
 
-		if (!response.ok) {
-		  console.error('Failed to check for new messages:', response.status);
-		  return;
-		}
+async function checkForNewMessages() {
+  try {
+    const response = await fetch(
+      `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&after=${lastMessageId || ''}`,
+      { credentials: 'include' }
+    );
 
-		const data = await response.json();
+    if (!response.ok) {
+      console.error('Failed to check for new messages:', response.status);
+      return;
+    }
 
-		if (data.messages && data.messages.length > 0) {
-		  // Add the number of new messages to our count
-		  lastMessageCount += data.messages.length;
+    const data = await response.json();
 
-		  // Check if user is scrolled at bottom
-		  const wasAtBottom = isScrollAtBottom();
+    if (data.messages && data.messages.length > 0) {
+      // Update lastMessageId to the newest message ID (or timestamp if that's your ID)
+      lastMessageId = data.messages[data.messages.length - 1].id || data.messages[data.messages.length - 1].timestamp;
 
-		  // Loop through and add new messages if not already in DOM
-		  data.messages.forEach(msg => {
-			if (!document.querySelector(`[data-message-id="${msg.timestamp}"]`)) {
-			  addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.timestamp);
-			}
-		  });
+      // Check if user is scrolled at bottom
+      const wasAtBottom = isScrollAtBottom();
 
-		  // Notify user if not at bottom
-		  if (!wasAtBottom) {
-			showNewMessageNotification(data.messages.length);
-		  }
-		}
-	  } catch (err) {
-		console.error("Auto-refresh error:", err);
-	  }
-	}
+      // Add new messages to chat if not present
+      data.messages.forEach(msg => {
+        const msgId = msg.id || msg.timestamp;
+        if (!document.querySelector(`[data-message-id="${msgId}"]`)) {
+          addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msgId);
+        }
+      });
 
-	// Call this repeatedly every 2-3 seconds to keep fetching
-	setInterval(checkForNewMessages, 2500);
+      // Notify if not scrolled to bottom
+      if (!wasAtBottom) {
+        showNewMessageNotification(data.messages.length);
+      }
+    }
+  } catch (err) {
+    console.error("Auto-refresh error:", err);
+  }
+}
+
+// Keep calling this every 2.5 secs
+setInterval(checkForNewMessages, 2500);
+
 
         function isScrollAtBottom() {
             const container = messagesContainer;
