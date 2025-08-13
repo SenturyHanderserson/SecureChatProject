@@ -219,7 +219,24 @@
     .new-message-notification i {
         margin-right: 8px;
     }
-    </style>
+		/* Add to your existing styles */
+	#refreshButton {
+		transition: transform 0.3s ease;
+	}
+
+	#refreshButton:hover {
+		transform: rotate(45deg);
+	}
+
+	.fa-spin {
+		animation: spin 1s linear infinite;
+	}
+
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
+		</style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
     <!-- Signing In Notification -->
@@ -390,6 +407,9 @@
                     <div class="relative">
                         <textarea id="messageInput" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-green-500 focus:outline-none resize-none" rows="1" placeholder="Message #general" disabled></textarea>
                         <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+						            <button id="refreshButton" class="text-gray-400 hover:text-green-400" title="Refresh Messages">
+										<i class="fas fa-sync-alt"></i>
+									</button>
                             <button class="text-gray-400 hover:text-green-400" title="Attach File">
                                 <i class="fas fa-paperclip"></i>
                             </button>
@@ -575,6 +595,16 @@
             // Handle tab visibility changes
             document.addEventListener('visibilitychange', handleVisibilityChange);
         }
+		        function startMessagePolling() {
+					// Clear any existing interval
+					if (messagePollingInterval) {
+						clearInterval(messagePollingInterval);
+					}
+					
+					// Start polling for new messages every 3 seconds
+					messagePollingInterval = setInterval(checkForNewMessages, 3000);
+				}
+				
         
         async function checkAutoLogin() {
             try {
@@ -733,16 +763,9 @@
             authError.classList.add('hidden');
         }
         
-        function startMessagePolling() {
-            // Clear any existing interval
-            if (messagePollingInterval) {
-                clearInterval(messagePollingInterval);
-            }
-            
-            // Start polling for new messages every 3 seconds
-            messagePollingInterval = setInterval(checkForNewMessages, 3000);
-        }
-        
+		// Add to your existing event listeners
+		const refreshButton = document.getElementById('refreshButton');
+		refreshButton.addEventListener('click', handleManualRefresh);
         async function checkForNewMessages() {
             try {
                 // Only fetch messages newer than our last known message
@@ -934,6 +957,69 @@
                 }
             }, 5000); // 5 seconds
         }
+		
+		async function handleManualRefresh() {
+    // Add loading animation to button
+    refreshButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    refreshButton.disabled = true;
+    
+    try {
+        // Force reload the last 50 messages
+        const response = await fetch(
+            `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${Math.max(0, channelTotal - PAGE_SIZE)}&limit=${PAGE_SIZE}`,
+            { credentials: 'include' }
+        );
+        
+        if (!response.ok) throw new Error('Refresh failed');
+        
+        const data = await response.json();
+        
+        // Clear existing messages (except welcome message if present)
+        const welcomeMessage = messageList.querySelector('.text-center'); // Preserve welcome message
+        messageList.innerHTML = '';
+        if (welcomeMessage) {
+            messageList.appendChild(welcomeMessage);
+        }
+        
+        // Add refreshed messages
+        data.messages.forEach(msg => {
+            addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
+        });
+        
+        // Update last message ID
+        if (data.messages.length > 0) {
+            lastMessageId = data.messages[data.messages.length - 1].id;
+        }
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Show success feedback
+        const notification = document.createElement('div');
+        notification.className = 'text-green-400 text-sm text-center mt-2';
+        notification.textContent = 'Messages refreshed';
+        messageInput.parentNode.insertBefore(notification, messageInput.nextSibling);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Refresh error:', error);
+        const errorElement = document.createElement('div');
+        errorElement.className = 'text-red-400 text-sm text-center mt-2';
+        errorElement.textContent = 'Refresh failed';
+        messageInput.parentNode.insertBefore(errorElement, messageInput.nextSibling);
+        
+        setTimeout(() => {
+            errorElement.remove();
+        }, 2000);
+    } finally {
+        // Restore button state
+        refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i>';
+        refreshButton.disabled = false;
+    }
+}
 		
 		       function getPollingInterval() {
 					if (navigator.connection) {
