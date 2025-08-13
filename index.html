@@ -591,7 +591,8 @@
                 if (document.hidden) {
                     // Tab is inactive - slow down checks
                     if (messagePollingInterval) clearInterval(messagePollingInterval);
-                    messagePollingInterval = setInterval(checkForNewMessages, 15000); // 15 seconds when inactive
+                    messagePollingInterval = // setInterval(checkForNewMessages, 2500); // disabled: using WebSocket push
+ // 15 seconds when inactive
                 } else {
                     // Tab is active - resume normal checks
                     if (messagePollingInterval) clearInterval(messagePollingInterval);
@@ -765,7 +766,8 @@
             messageInput.disabled = false;
             
             // Start polling for new messages
-            startMessagePolling();
+            // startMessagePolling(); // disabled: using WebSocket push
+
             
             // Clear forms
             document.getElementById('loginUsername').value = '';
@@ -972,7 +974,8 @@
             
             // Load messages and then start refreshing
             loadMessagesForChannel().then(() => {
-                startMessagePolling();
+                // startMessagePolling(); // disabled: using WebSocket push
+
             });
         }
         
@@ -1435,5 +1438,86 @@
             }
         }
     </script>
+
+<script>
+// ===== Real-time WebSocket (no duplicates) =====
+(function(){
+  // Config: change if you store these elsewhere
+  const WS_URL = window.WS_URL || 'wss://secure-chat-website-https-converter.onrender.com';
+
+  // Keep a single socket with basic auto-reconnect
+  let socket;
+  let reconnectDelay = 1000; // start at 1s, backoff up to 10s
+  const maxDelay = 10000;
+
+  // Track seen message IDs to prevent duplicates across WS and any fallback
+  window.seenMessageIds = window.seenMessageIds || new Set();
+
+  function addMessageIfNew(message) {
+    const id = message.id || message.timestamp;
+    if (!id) return; // require an identifier
+    if (seenMessageIds.has(id)) return;
+    seenMessageIds.add(id);
+    try {
+      addMessageToChat(
+        message.username,
+        message.role,
+        typeof formatTime === 'function' ? formatTime(message.timestamp) : new Date(message.timestamp).toLocaleString(),
+        message.content,
+        message.pinned,
+        id
+      );
+    } catch (e) {
+      console.error('addMessageIfNew failed:', e, message);
+    }
+  }
+
+  function connect() {
+    try {
+      socket = new WebSocket(WS_URL);
+
+      socket.addEventListener('open', () => {
+        console.log('[WS] connected');
+        reconnectDelay = 1000; // reset backoff
+      });
+
+      socket.addEventListener('message', (event) => {
+        let packet;
+        try { packet = JSON.parse(event.data); } catch(e){ return; }
+        if (packet && packet.type === 'newMessage' && packet.data) {
+          const msg = packet.data;
+          // Optional: only render for currentChannel if defined on window
+          if (!window.currentChannel || msg.channel === window.currentChannel) {
+            addMessageIfNew(msg);
+          }
+        }
+      });
+
+      socket.addEventListener('close', () => {
+        console.log('[WS] disconnected');
+        // auto-reconnect with backoff
+        setTimeout(connect, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+      });
+
+      socket.addEventListener('error', (err) => {
+        console.warn('[WS] error', err);
+        try { socket.close(); } catch(_){}
+      });
+    } catch (e) {
+      console.error('[WS] connect error', e);
+      setTimeout(connect, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+    }
+  }
+
+  // Kick it off
+  connect();
+
+  // Expose helper globally in case polling fallback wants to use it too
+  window.addMessageIfNew = addMessageIfNew;
+})();
+</script>
+
 </body>
 </html>
