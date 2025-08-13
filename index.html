@@ -810,7 +810,9 @@
 
 				if (latestFromServer && latestFromServer !== latestInDOM) {
 					// Append only new messages
-					const newMessages = data.messages.filter(msg => msg.id !== latestInDOM);
+					const domIds = Array.from(messageList.children).map(el => el.dataset.messageId);
+					const newMessages = data.messages.filter(msg => !domIds.includes(String(msg.id)));
+
 					newMessages.forEach(msg => {
 						addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
 					});
@@ -1154,6 +1156,24 @@
                     
                     messageInput.value = '';
                     cancelMessageReply();
+					// Immediately fetch and append the latest message from the server
+					try {
+						const latestResponse = await fetch(
+							`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${channelTotal}&limit=1`,
+							{ credentials: 'include' }
+						);
+						if (latestResponse.ok) {
+							const latestData = await latestResponse.json();
+							if (latestData.messages.length > 0) {
+								const msg = latestData.messages[0];
+								addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
+								channelTotal++; // Keep count in sync
+							}
+						}
+					} catch (err) {
+						console.error("Error fetching latest message:", err);
+					}
+
                     
                     // Show success message
                     const successElement = document.createElement('div');
