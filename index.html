@@ -623,19 +623,7 @@
                 signingInNotification.classList.add('hidden');
             }
         }
-
-		let autoRefreshInterval = null;
-		
-		function startAutoRefresh() {
-		    if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-		    autoRefreshInterval = setInterval(() => {
-		        loadMessagesForChannel();
-		    }, 3000); // every 3 seconds
-		}
-		
-		// Inside successfulLogin(), after loadMessagesForChannel();
-		startAutoRefresh();
-
+        
         async function handleSignup(e) {
             e.preventDefault();
             
@@ -691,7 +679,6 @@
             updateUserDisplay();
             loadChannels();
             loadUsers();
-			startAutoRefresh();
             loadMessagesForChannel();
             messageInput.disabled = false;
             
