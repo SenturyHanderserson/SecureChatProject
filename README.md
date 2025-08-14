@@ -11,6 +11,8 @@ An unblocked alternative to Discord.
  - - Made Backend files for messages, mainly saving messages and users for the whole server. (Development started)
 - Version 1.06
 - - Bug fixes, logins work, messages are currently being fixed, the site is almost at a basic level of usability, and out of development.
+  - Version 1.07
+  - - Major bugs needing to be patched, please refrain from using the website too much
 # Soon to come
 - Private channels
 - Communities/Servers
