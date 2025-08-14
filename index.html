@@ -579,36 +579,61 @@
         // Initialize the app
         initApp();
         
-        function initApp() {
-            // Check for existing session
-            checkAutoLogin();
-            
-            // Set up periodic updates
-            setInterval(loadUsers, 30000); // Update users every 30 seconds
-            
-            // Handle tab visibility changes
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    // Tab is inactive - slow down checks
-                    if (messagePollingInterval) clearInterval(messagePollingInterval);
-                    messagePollingInterval = setInterval(checkForNewMessages, 15000); // 15 seconds when inactive
-                } else {
-                    // Tab is active - resume normal checks
-                    if (messagePollingInterval) clearInterval(messagePollingInterval);
-                    messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
-                }
-            });
-        }
+		function initApp() {
+			// Check for existing session
+			checkAutoLogin();
+			
+			// Set up periodic updates
+			setInterval(loadUsers, 30000); // Update users every 30 seconds
+
+			// Helper to decide when to poll
+			function shouldPoll() {
+				return document.hidden || socket.readyState !== WebSocket.OPEN;
+			}
+
+			// Handle tab visibility changes
+			document.addEventListener('visibilitychange', () => {
+				if (messagePollingInterval) clearInterval(messagePollingInterval);
+				if (shouldPoll()) {
+					messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
+				}
+			});
+		}
+
+		
+		function tryAppendMessageFromServer(msg) {
+			if (!msg || !msg.id) return;
+
+			// Global, cross-path dedupe
+			if (seenMessageIds.has(msg.id)) return;
+			seenMessageIds.add(msg.id);
+
+			// Render
+			addMessageToChat(
+				msg.username,
+				msg.role,
+				formatTime(msg.timestamp),
+				msg.content,
+				msg.pinned,
+				msg.id
+			);
+
+			// Track newest id for polling
+			lastMessageId = msg.id;
+		}
+		function resetMessageState() {
+			seenMessageIds.clear();
+			lastMessageId = null;
+		}
+
+
         
-        function startMessagePolling() {
-            // Clear any existing interval
-            if (messagePollingInterval) {
-                clearInterval(messagePollingInterval);
-            }
-            
-            // Start polling for new messages
-            messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
-        }
+		function startMessagePolling() {
+			if (messagePollingInterval) clearInterval(messagePollingInterval);
+			if (!shouldPoll()) return;
+			messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
+		}
+
         
         function getPollingInterval() {
             if (navigator.connection) {
@@ -777,6 +802,7 @@
         }
         
         async function checkForNewMessages() {
+		if (!lastMessageId) return;
             try {
                 // Only fetch messages newer than our last known message
                 const response = await fetch(
@@ -842,24 +868,15 @@
 		  const msg = JSON.parse(event.data);
 
 		  if (msg.type === 'newMessage') {
-			const message = msg.data;
+			const m = msg.data;
 
-			// Optionally check if message is for the current channel
-			if (message.channel === currentChannel || !currentChannel) { 
-			  // Avoid duplicate messages in DOM
-			  if (!document.querySelector(`[data-message-id="${message.timestamp}"]`)) {
-				addMessageToChat(
-				  message.username, 
-				  message.role, 
-				  formatTime(message.timestamp), 
-				  message.content, 
-				  message.pinned, 
-				  message.timestamp
-				);
-			  }
+			// Only render if it belongs to the current channel
+			if (m.channel === currentChannel) {
+			  tryAppendMessageFromServer(m);
 			}
 		  }
 		});
+
 
         async function handleLogout() {
             try {
@@ -888,11 +905,18 @@
                 channelList.innerHTML = '';
                 userList.innerHTML = '';
                 messageInput.disabled = true;
+				seenMessageIds.clear();
+				lastMessageId = null;
+
                 
                 // Clear the token cookie
                 document.cookie = 'wb_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             }
         }
+		function shouldPoll() {
+			return document.hidden || socket.readyState !== WebSocket.OPEN;
+		}
+
         
         function updateUserDisplay() {
             if (currentUser.username) {
@@ -963,6 +987,7 @@
         
         // Hook into when a channel is switched
         function onChannelChange(channelName) {
+			resetMessageState();
             currentChannel = channelName;
             currentChannelDisplay.textContent = channelName;
             highlightCurrentChannel();
@@ -1065,6 +1090,7 @@
                 messageList.innerHTML = '';
                 loadingMore.classList.add('hidden');
                 lastMessageId = null;
+				resetMessageState();
                 
                 // First get the total count
                 const countResponse = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=0&limit=1`, {
@@ -1101,11 +1127,8 @@
                     messageList.appendChild(welcomeDiv);
                 }
                 
-                data.messages.forEach(msg => {
-                    addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-                    // Update lastMessageId to the newest message
-                    lastMessageId = msg.id;
-                });
+				data.messages.forEach(tryAppendMessageFromServer);
+
                 
                 setTimeout(() => {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1133,10 +1156,21 @@
                     const data = await response.json();
                     const fragment = document.createDocumentFragment();
                     
-                    data.messages.forEach(msg => {
-                        const messageElement = createMessageElement(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-                        fragment.insertBefore(messageElement, fragment.firstChild);
-                    });
+					data.messages.forEach(msg => {
+						if (!seenMessageIds.has(msg.id)) {
+							seenMessageIds.add(msg.id);
+							const el = createMessageElement(
+								msg.username,
+								msg.role,
+								formatTime(msg.timestamp),
+								msg.content,
+								msg.pinned,
+								msg.id
+							);
+							fragment.insertBefore(el, fragment.firstChild);
+						}
+					});
+
                     
                     messageList.insertBefore(fragment, messageList.firstChild);
                     channelOffset = newOffset;
@@ -1308,21 +1342,16 @@
                     
                     // Immediately fetch and append the latest message from the server
                     try {
-                        const latestResponse = await fetch(
-                            `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${channelTotal}&limit=1`,
-                            { credentials: 'include' }
-                        );
-                        if (latestResponse.ok) {
-                            const latestData = await latestResponse.json();
-                            if (latestData.messages.length > 0) {
-                                const msg = latestData.messages[0];
-                                addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-                                channelTotal++; // Keep count in sync
-                            }
-                        }
-                    } catch (err) {
-                        console.error("Error fetching latest message:", err);
-                    }
+						// Clear input and reply UI
+						messageInput.value = '';
+						cancelMessageReply();
+
+						// If the server returned the full message object, render it immediately.
+						// Otherwise, let WebSocket or polling deliver it (dedupe will protect us).
+						if (data && data.id && data.timestamp && data.username) {
+							tryAppendMessageFromServer(data);
+						}
+
 
                     // Show success message
                     const successElement = document.createElement('div');
