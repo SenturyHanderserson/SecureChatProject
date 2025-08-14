@@ -78,156 +78,156 @@
             }
         }
     
-    @keyframes progress {
-        0% { width: 70%; }
-        100% { width: 75%; }
-    }
-    
-    .animate-progress {
-        animation: progress 2s ease-in-out infinite alternate;
-    }
-    
-    /* Loading dots animation */
-    @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-    }
-    
-    .bounce-1 { animation: bounce 0.6s infinite ease-in-out; }
-    .bounce-2 { animation: bounce 0.6s infinite ease-in-out 0.2s; }
-    .bounce-3 { animation: bounce 0.6s infinite ease-in-out 0.4s; }
-    
-    /* Signing in notification */
-    .signing-in-notification {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(0, 0, 0, 0.8);
-        padding: 20px 30px;
-        border-radius: 10px;
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
-        border: 1px solid #2ecc71;
-    }
-    
-    .signing-in-text {
-        margin-bottom: 15px;
-        font-size: 18px;
-        color: #2ecc71;
-    }
-    
-    .loading-dots {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .dot {
-        width: 12px;
-        height: 12px;
-        background-color: #2ecc71;
-        border-radius: 50%;
-    }
-    
-    /* Development Notification Styles */
-    @keyframes slideIn {
-        from { transform: translateY(100%); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-    }
-    
-    .notification {
-        animation: slideIn 0.5s ease-out forwards;
-    }
-    
-    .pulse {
-        animation: pulse 2s infinite;
-    }
-    
-    .close-btn:hover {
-        transform: rotate(90deg);
-        transition: transform 0.3s ease;
-    }
-    
-    .leaf {
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        background-color: rgba(255, 255, 255, 0.3);
-        border-radius: 50% 0 50% 50%;
-        transform: rotate(-45deg);
-    }
-    
-    .leaf-1 {
-        top: 10px;
-        left: 10px;
-        animation: float 4s ease-in-out infinite;
-    }
-    
-    .leaf-2 {
-        bottom: 15px;
-        right: 15px;
-        animation: float 3s ease-in-out infinite reverse;
-    }
-    
-    @keyframes float {
-        0% { transform: translateY(0) rotate(-45deg); }
-        50% { transform: translateY(-10px) rotate(-45deg); }
-        100% { transform: translateY(0) rotate(-45deg); }
-    }
+        @keyframes progress {
+            0% { width: 70%; }
+            100% { width: 75%; }
+        }
+        
+        .animate-progress {
+            animation: progress 2s ease-in-out infinite alternate;
+        }
+        
+        /* Loading dots animation */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .bounce-1 { animation: bounce 0.6s infinite ease-in-out; }
+        .bounce-2 { animation: bounce 0.6s infinite ease-in-out 0.2s; }
+        .bounce-3 { animation: bounce 0.6s infinite ease-in-out 0.4s; }
+        
+        /* Signing in notification */
+        .signing-in-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 20px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+            border: 1px solid #2ecc71;
+        }
+        
+        .signing-in-text {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: #2ecc71;
+        }
+        
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #2ecc71;
+            border-radius: 50%;
+        }
+        
+        /* Development Notification Styles */
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+        
+        .notification {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .close-btn:hover {
+            transform: rotate(90deg);
+            transition: transform 0.3s ease;
+        }
+        
+        .leaf {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50% 0 50% 50%;
+            transform: rotate(-45deg);
+        }
+        
+        .leaf-1 {
+            top: 10px;
+            left: 10px;
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        .leaf-2 {
+            bottom: 15px;
+            right: 15px;
+            animation: float 3s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) rotate(-45deg); }
+            50% { transform: translateY(-10px) rotate(-45deg); }
+            100% { transform: translateY(0) rotate(-45deg); }
+        }
 
-    /* Loading more messages indicator */
-    .loading-more {
-        text-align: center;
-        padding: 1rem;
-        color: #6b7280;
-        font-size: 0.875rem;
-    }
-    
-    /* New message notification */
-    .new-message-notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: rgba(46, 204, 113, 0.9);
-        color: white;
-        padding: 10px 15px;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        cursor: pointer;
-        z-index: 100;
-        display: flex;
-        align-items: center;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    .new-message-notification:hover {
-        background-color: rgba(46, 204, 113, 1);
-    }
-    
-    .new-message-notification i {
-        margin-right: 8px;
-    }
-    
-    .fa-spin {
-        animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+        /* Loading more messages indicator */
+        .loading-more {
+            text-align: center;
+            padding: 1rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        /* New message notification */
+        .new-message-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .new-message-notification:hover {
+            background-color: rgba(46, 204, 113, 1);
+        }
+        
+        .new-message-notification i {
+            margin-right: 8px;
+        }
+        
+        .fa-spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
@@ -485,9 +485,8 @@
 
     <script>
         const API_BASE = 'https://secure-chat-website-https-converter.onrender.com/api';
-		const socket = new WebSocket('wss://secure-chat-website-https-converter.onrender.com/api'); 
+        const socket = new WebSocket('wss://secure-chat-website-https-converter.onrender.com/api'); 
 
-        
         // Current user state
         let currentUser = {
             username: null,
@@ -504,15 +503,14 @@
         const PAGE_SIZE = 50;
         let messagePollingInterval = null;
         let lastMessageId = null;
-		const seenMessageIds = new Set();
+        const seenMessageIds = new Set();
 
-        
         // User roles and their display properties with fallback
         const roles = {
             admin: { name: 'Admin', color: 'role-admin' },
             moderator: { name: 'Moderator', color: 'role-moderator' },
             member: { name: 'Member', color: 'role-member' },
-			owner: { name: 'Owner', color: 'role-owner' },
+            owner: { name: 'Owner', color: 'role-owner' },
             guest: { name: 'Guest', color: 'role-guest' },
             default: { name: 'User', color: 'text-gray-400' }
         };
@@ -579,62 +577,54 @@
         // Initialize the app
         initApp();
         
-		function initApp() {
-			// Check for existing session
-			checkAutoLogin();
-			
-			// Set up periodic updates
-			setInterval(loadUsers, 30000); // Update users every 30 seconds
+        function initApp() {
+            // Check for existing session
+            checkAutoLogin();
+            
+            // Set up periodic updates
+            setInterval(loadUsers, 30000); // Update users every 30 seconds
 
-			// Helper to decide when to poll
-			function shouldPoll() {
-				return document.hidden || socket.readyState !== WebSocket.OPEN;
-			}
+            // Handle tab visibility changes
+            document.addEventListener('visibilitychange', () => {
+                if (messagePollingInterval) clearInterval(messagePollingInterval);
+                if (shouldPoll()) {
+                    messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
+                }
+            });
+        }
 
-			// Handle tab visibility changes
-			document.addEventListener('visibilitychange', () => {
-				if (messagePollingInterval) clearInterval(messagePollingInterval);
-				if (shouldPoll()) {
-					messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
-				}
-			});
-		}
+        function tryAppendMessageFromServer(msg) {
+            if (!msg || !msg.id) return;
 
-		
-		function tryAppendMessageFromServer(msg) {
-			if (!msg || !msg.id) return;
+            // Global, cross-path dedupe
+            if (seenMessageIds.has(msg.id)) return;
+            seenMessageIds.add(msg.id);
 
-			// Global, cross-path dedupe
-			if (seenMessageIds.has(msg.id)) return;
-			seenMessageIds.add(msg.id);
+            // Render
+            addMessageToChat(
+                msg.username,
+                msg.role,
+                formatTime(msg.timestamp),
+                msg.content,
+                msg.pinned,
+                msg.id
+            );
 
-			// Render
-			addMessageToChat(
-				msg.username,
-				msg.role,
-				formatTime(msg.timestamp),
-				msg.content,
-				msg.pinned,
-				msg.id
-			);
-
-			// Track newest id for polling
-			lastMessageId = msg.id;
-		}
-		function resetMessageState() {
-			seenMessageIds.clear();
-			lastMessageId = null;
-		}
-
-
+            // Track newest id for polling
+            lastMessageId = msg.id;
+        }
         
-		function startMessagePolling() {
-			if (messagePollingInterval) clearInterval(messagePollingInterval);
-			if (!shouldPoll()) return;
-			messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
-		}
+        function resetMessageState() {
+            seenMessageIds.clear();
+            lastMessageId = null;
+        }
 
-        
+        function startMessagePolling() {
+            if (messagePollingInterval) clearInterval(messagePollingInterval);
+            if (!shouldPoll()) return;
+            messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
+        }
+
         function getPollingInterval() {
             if (navigator.connection) {
                 if (navigator.connection.saveData || navigator.connection.effectiveType === '2g') {
@@ -802,7 +792,7 @@
         }
         
         async function checkForNewMessages() {
-		if (!lastMessageId) return;
+            if (!lastMessageId) return;
             try {
                 // Only fetch messages newer than our last known message
                 const response = await fetch(
@@ -864,19 +854,18 @@
             newMessageNotification.classList.add('hidden');
         }
         
-		socket.addEventListener('message', (event) => {
-		  const msg = JSON.parse(event.data);
+        socket.addEventListener('message', (event) => {
+            const msg = JSON.parse(event.data);
 
-		  if (msg.type === 'newMessage') {
-			const m = msg.data;
+            if (msg.type === 'newMessage') {
+                const m = msg.data;
 
-			// Only render if it belongs to the current channel
-			if (m.channel === currentChannel) {
-			  tryAppendMessageFromServer(m);
-			}
-		  }
-		});
-
+                // Only render if it belongs to the current channel
+                if (m.channel === currentChannel) {
+                    tryAppendMessageFromServer(m);
+                }
+            }
+        });
 
         async function handleLogout() {
             try {
@@ -905,19 +894,18 @@
                 channelList.innerHTML = '';
                 userList.innerHTML = '';
                 messageInput.disabled = true;
-				seenMessageIds.clear();
-				lastMessageId = null;
-
+                seenMessageIds.clear();
+                lastMessageId = null;
                 
                 // Clear the token cookie
                 document.cookie = 'wb_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             }
         }
-		function shouldPoll() {
-			return document.hidden || socket.readyState !== WebSocket.OPEN;
-		}
-
         
+        function shouldPoll() {
+            return document.hidden || socket.readyState !== WebSocket.OPEN;
+        }
+
         function updateUserDisplay() {
             if (currentUser.username) {
                 currentUsername.textContent = currentUser.username;
@@ -987,7 +975,7 @@
         
         // Hook into when a channel is switched
         function onChannelChange(channelName) {
-			resetMessageState();
+            resetMessageState();
             currentChannel = channelName;
             currentChannelDisplay.textContent = channelName;
             highlightCurrentChannel();
@@ -1090,7 +1078,7 @@
                 messageList.innerHTML = '';
                 loadingMore.classList.add('hidden');
                 lastMessageId = null;
-				resetMessageState();
+                resetMessageState();
                 
                 // First get the total count
                 const countResponse = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=0&limit=1`, {
@@ -1127,8 +1115,7 @@
                     messageList.appendChild(welcomeDiv);
                 }
                 
-				data.messages.forEach(tryAppendMessageFromServer);
-
+                data.messages.forEach(tryAppendMessageFromServer);
                 
                 setTimeout(() => {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1156,21 +1143,20 @@
                     const data = await response.json();
                     const fragment = document.createDocumentFragment();
                     
-					data.messages.forEach(msg => {
-						if (!seenMessageIds.has(msg.id)) {
-							seenMessageIds.add(msg.id);
-							const el = createMessageElement(
-								msg.username,
-								msg.role,
-								formatTime(msg.timestamp),
-								msg.content,
-								msg.pinned,
-								msg.id
-							);
-							fragment.insertBefore(el, fragment.firstChild);
-						}
-					});
-
+                    data.messages.forEach(msg => {
+                        if (!seenMessageIds.has(msg.id)) {
+                            seenMessageIds.add(msg.id);
+                            const el = createMessageElement(
+                                msg.username,
+                                msg.role,
+                                formatTime(msg.timestamp),
+                                msg.content,
+                                msg.pinned,
+                                msg.id
+                            );
+                            fragment.insertBefore(el, fragment.firstChild);
+                        }
+                    });
                     
                     messageList.insertBefore(fragment, messageList.firstChild);
                     channelOffset = newOffset;
@@ -1337,21 +1323,15 @@
                     const data = await response.json();
                     lastMessageId = data.id; // Update last message ID
                     
+                    // Clear input and reply UI
                     messageInput.value = '';
                     cancelMessageReply();
-                    
-                    // Immediately fetch and append the latest message from the server
-                    try {
-						// Clear input and reply UI
-						messageInput.value = '';
-						cancelMessageReply();
 
-						// If the server returned the full message object, render it immediately.
-						// Otherwise, let WebSocket or polling deliver it (dedupe will protect us).
-						if (data && data.id && data.timestamp && data.username) {
-							tryAppendMessageFromServer(data);
-						}
-
+                    // If the server returned the full message object, render it immediately.
+                    // Otherwise, let WebSocket or polling deliver it (dedupe will protect us).
+                    if (data && data.id && data.timestamp && data.username) {
+                        tryAppendMessageFromServer(data);
+                    }
 
                     // Show success message
                     const successElement = document.createElement('div');
