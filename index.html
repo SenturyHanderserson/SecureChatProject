@@ -1,3 +1,4 @@
+can we make sure it updates for yourself when you send the message as well without breaking any important logic, please the full tweaked code:
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1329,9 +1330,20 @@
 
                     // If the server returned the full message object, render it immediately.
                     // Otherwise, let WebSocket or polling deliver it (dedupe will protect us).
-                    if (data && data.id && data.timestamp && data.username) {
-                        tryAppendMessageFromServer(data);
-                    }
+					if (data && data.id && data.timestamp && data.username) {
+						// Mark as seen immediately so we don't get it again from WS/polling
+						seenMessageIds.add(data.id);
+						lastMessageId = data.id;
+						addMessageToChat(
+							data.username,
+							data.role,
+							formatTime(data.timestamp),
+							data.content,
+							data.pinned,
+							data.id
+						);
+					}
+
 
                     // Show success message
                     const successElement = document.createElement('div');
