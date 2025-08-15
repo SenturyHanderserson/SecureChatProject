@@ -609,10 +609,12 @@
                 msg.pinned,
                 msg.id
             );
+            // Track newest id for polling (always take the highest/latest)
+			if (!lastMessageId || msg.id > lastMessageId) {
+				lastMessageId = msg.id;
+			}
 
-            // Track newest id for polling
-            lastMessageId = msg.id;
-        }
+					}
         
         function resetMessageState() {
             seenMessageIds.clear();
@@ -817,9 +819,10 @@
                     
                     // Add messages to the UI
                     data.messages.forEach(msg => {
-                        if (!document.querySelector(`[data-message-id="${msg.id}"]`)) {
-                            addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-                        }
+						if (!document.querySelector(`[data-message-id="${msg.id}"]`)) {
+							seenMessageIds.add(msg.id);
+							addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
+						}
                     });
                     
                     // Show notification if not at bottom
@@ -1424,6 +1427,10 @@ async function handleMessageInput(e) {
                 alert(error.message);
             }
         }
+				setInterval(() => {
+			seenMessageIds.clear();
+		}, 300000); // every 5 minutes
+
     </script>
 </body>
 </html>
