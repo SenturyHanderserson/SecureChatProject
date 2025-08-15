@@ -1304,9 +1304,7 @@ async function handleMessageInput(e) {
         try {
             const response = await fetch(`${API_BASE}/messages`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
                     channel: currentChannel,
@@ -1321,61 +1319,26 @@ async function handleMessageInput(e) {
             }
 
             const data = await response.json();
-            lastMessageId = data.id; // Update last message ID
+            lastMessageId = data.id;
 
-            // Clear input and reply UI
-            messageInput.value = '';
-            cancelMessageReply();
-
-            // Always show your own message instantly
+            // Use server message if full data is returned, else use local info
             addMessageToChat(
-                currentUser.username,
-                currentUser.role,
-                formatTime(Date.now()),
-                replyToMessage ? `@${replyToUser.textContent} ${content}` : content,
-                false,
+                data.username || currentUser.username,
+                data.role || currentUser.role,
+                formatTime(data.timestamp || Date.now()),
+                data.content || (replyToMessage ? `@${replyToUser.textContent} ${content}` : content),
+                data.pinned || false,
                 data.id || `temp-${Date.now()}`
             );
 
-            // Also keep the old logic if server returns full object (for consistency)
-            if (data && data.id && data.timestamp && data.username) {
-                seenMessageIds.add(data.id);
-                lastMessageId = data.id;
-                addMessageToChat(
-                    data.username,
-                    data.role,
-                    formatTime(data.timestamp),
-                    data.content,
-                    data.pinned,
-                    data.id
-                );
-            }
+            seenMessageIds.add(data.id || `temp-${Date.now()}`);
 
-            // Show success message
-            const successElement = document.createElement('div');
-            successElement.className = 'text-green-400 mb-2 text-sm';
-            successElement.textContent = 'Message sent!';
-            messageInput.parentNode.insertBefore(successElement, messageInput);
-
-            // Remove success message after 3 seconds
-            setTimeout(() => {
-                if (successElement.parentNode) {
-                    successElement.parentNode.removeChild(successElement);
-                }
-            }, 3000);
+            // Clear input & reply state
+            messageInput.value = '';
+            cancelMessageReply();
 
         } catch (error) {
             console.error('Error sending message:', error);
-            const errorElement = document.createElement('div');
-            errorElement.className = 'text-red-400 mb-2 text-sm';
-            errorElement.textContent = `Error: ${error.message}`;
-            messageInput.parentNode.insertBefore(errorElement, messageInput);
-
-            setTimeout(() => {
-                if (errorElement.parentNode) {
-                    errorElement.parentNode.removeChild(errorElement);
-                }
-            }, 5000);
         }
     }
 }
@@ -1464,3 +1427,4 @@ async function handleMessageInput(e) {
     </script>
 </body>
 </html>
+
