@@ -1325,23 +1325,17 @@
                     
                     // Clear input and reply UI
                     messageInput.value = '';
-                    cancelMessageReply();
+					// Show your own message instantly
+					addMessageToChat(
+						currentUser.username,
+						currentUser.role,
+						formatTime(Date.now()),
+						replyToMessage ? `@${replyToUser.textContent} ${content}` : content,
+						false,
+						`temp-${Date.now()}`
+					);
 
-                    // If the server returned the full message object, render it immediately.
-                    // Otherwise, let WebSocket or polling deliver it (dedupe will protect us).
-					if (data && data.id && data.timestamp && data.username) {
-						// Mark as seen immediately so we don't get it again from WS/polling
-						seenMessageIds.add(data.id);
-						lastMessageId = data.id;
-						addMessageToChat(
-							data.username,
-							data.role,
-							formatTime(data.timestamp),
-							data.content,
-							data.pinned,
-							data.id
-						);
-					}
+                    cancelMessageReply();
 
 
                     // Show success message
