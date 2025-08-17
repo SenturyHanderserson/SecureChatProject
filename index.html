@@ -370,17 +370,20 @@
             </div>
             
 			<!--Messages--> 
-			<div id="messagesContainer" class="flex-1 overflow-y-auto bg-gray-900 relative">
-				<div id="scrollAnchor" style="height: 1px;"></div>
-				<div id="messageViewport" class="absolute top-0 left-0 right-0">
-					<!-- This will be our virtual scrolling viewport -->
-					<div id="messageList" class="max-w-3xl mx-auto">
-						<!-- Messages will be rendered here -->
+		<div id="messagesContainer" class="flex-1 overflow-y-auto p-4 bg-gray-900">
+			<div class="max-w-3xl mx-auto">
+				<!-- Welcome message (initial state) -->
+				<div id="welcomeMessage" class="mb-8 text-center">
+					<div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
+						<i class="fas fa-code text-3xl text-green-400"></i>
+					</div>
+					<h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to Secure Chat!</h3>
+					<p class="text-gray-300">This is the start of the <span class="text-green-400">#general</span> channel.</p>
+				</div>
+					<div id="loadingMore" class="loading-more hidden text-center py-4 text-gray-400">
+						<i class="fas fa-circle-notch fa-spin mr-2"></i> Loading more messages...
 					</div>
 				</div>
-			</div>
-			<div id="loadingMore" class="loading-more hidden">
-				Loading more messages...
 			</div>
             
             <!-- Message Input -->
