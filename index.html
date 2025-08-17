@@ -228,6 +228,14 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+		#messageViewport {
+			will-change: transform;
+		}
+
+		.message-placeholder {
+			height: var(--message-height);
+			background-color: rgba(255, 255, 255, 0.01);
+		}
     </style>
 </head>
 <body class="gradient-bg text-white min-h-screen flex overflow-hidden">
@@ -361,27 +369,16 @@
                 </div>
             </div>
             
-            <!-- Messages Area -->
-            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 bg-gray-900">
-                <div class="max-w-3xl mx-auto">
-                    <!-- Welcome Message -->
-                    <div class="message-enter mb-8 text-center">
-                        <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
-                            <i class="fas fa-code text-3xl text-green-400"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to Secure Chat!</h3>
-                        <p class="text-gray-400">This is the start of the <span class="text-green-400">#general</span> channel.</p>
-                    </div>
-                    
-                    <!-- Messages will be loaded here -->
-                    <div id="messageList">
-                        <!-- Messages will be populated here -->
-                    </div>
-                    <div id="loadingMore" class="loading-more hidden">
-                        Loading more messages...
-                    </div>
-                </div>
-            </div>
+			<!--Messages--> 
+			<div id="messagesContainer" class="flex-1 overflow-y-auto bg-gray-900 relative">
+				<div id="scrollAnchor" style="height: 1px;"></div>
+				<div id="messageViewport" class="absolute top-0 left-0 right-0">
+					<!-- This will be our virtual scrolling viewport -->
+					<div id="messageList" class="max-w-3xl mx-auto">
+						<!-- Messages will be rendered here -->
+					</div>
+				</div>
+			</div>
             
             <!-- Message Input -->
             <div class="p-4 border-t border-gray-800 bg-gray-900">
@@ -504,6 +501,12 @@
         let messagePollingInterval = null;
         let lastMessageId = null;
         const seenMessageIds = new Set();
+		let allMessages = [];
+		let visibleMessages = [];
+		let viewportHeight = 0;
+		let messageHeightEstimate = 100; // Average message height in pixels
+		let scrollPosition = 0;
+		let bufferSize = 5; // Extra messages to render above/below viewport
 
         // User roles and their display properties with fallback
         const roles = {
@@ -589,32 +592,37 @@
                 if (messagePollingInterval) clearInterval(messagePollingInterval);
                 if (shouldPoll()) {
                     messagePollingInterval = setInterval(checkForNewMessages, getPollingInterval());
-                }
-            });
-        }
+						}
+					});
+				}
 
-        function tryAppendMessageFromServer(msg) {
-            if (!msg || !msg.id) return;
+		function tryAppendMessageFromServer(msg) {
+			if (!msg || !msg.id) return;
 
-            // Global, cross-path dedupe
-            if (seenMessageIds.has(msg.id)) return;
-            seenMessageIds.add(msg.id);
+			// Skip if we've already seen this message
+			if (seenMessageIds.has(msg.id)) return;
+			
+			// Add to seen messages
+			seenMessageIds.add(msg.id);
 
-            // Render
-            addMessageToChat(
-                msg.username,
-                msg.role,
-                formatTime(msg.timestamp),
-                msg.content,
-                msg.pinned,
-                msg.id
-            );
-            // Track newest id for polling (always take the highest/latest)
+			// Skip if we already have this message in the DOM
+			if (document.querySelector(`[data-message-id="${msg.id}"]`)) return;
+
+			// Track newest id for polling
 			if (!lastMessageId || msg.id > lastMessageId) {
 				lastMessageId = msg.id;
 			}
 
-					}
+			// Render the message
+			addMessageToChat(
+				msg.username,
+				msg.role,
+				formatTime(msg.timestamp),
+				msg.content,
+				msg.pinned,
+				msg.id
+			);
+}
         
         function resetMessageState() {
             seenMessageIds.clear();
@@ -679,7 +687,73 @@
             }
             authError.classList.add('hidden');
         }
-        
+        function initVirtualScroll() {
+			viewportHeight = messagesContainer.clientHeight;
+			messagesContainer.addEventListener('scroll', handleVirtualScroll);
+			window.addEventListener('resize', handleResize);
+		}
+		
+		function handleResize() {
+			viewportHeight = messagesContainer.clientHeight;
+			updateVisibleMessages();
+		}
+		function updateVisibleMessages() {
+			if (allMessages.length === 0) return;
+
+			// Calculate visible range
+			const startIdx = Math.max(0, Math.floor(scrollPosition / messageHeightEstimate) - bufferSize);
+			const endIdx = Math.min(
+				allMessages.length - 1,
+				Math.floor((scrollPosition + viewportHeight) / messageHeightEstimate) + bufferSize
+			);
+
+			// Update DOM
+			renderVisibleMessages(startIdx, endIdx);
+
+			// Adjust scroll anchor height
+			const totalHeight = allMessages.length * messageHeightEstimate;
+			scrollAnchor.style.height = `${totalHeight}px`;
+			messageViewport.style.transform = `translateY(${startIdx * messageHeightEstimate}px)`;
+		}
+		
+		
+		function renderVisibleMessages(startIdx, endIdx) {
+			// Clear existing messages
+			messageList.innerHTML = '';
+
+			// Add placeholders for non-visible messages above
+			if (startIdx > 0) {
+				const topPlaceholder = document.createElement('div');
+				topPlaceholder.className = 'message-placeholder';
+				topPlaceholder.style.height = `${startIdx * messageHeightEstimate}px`;
+				messageList.appendChild(topPlaceholder);
+			}
+
+			// Render visible messages
+			for (let i = startIdx; i <= endIdx; i++) {
+				const msg = allMessages[i];
+				const messageElement = createMessageElement(
+					msg.username,
+					msg.role,
+					formatTime(msg.timestamp),
+					msg.content,
+					msg.pinned,
+					msg.id
+				);
+				messageList.appendChild(messageElement);
+			}
+
+			// Add placeholders for non-visible messages below
+			if (endIdx < allMessages.length - 1) {
+				const bottomPlaceholder = document.createElement('div');
+				bottomPlaceholder.className = 'message-placeholder';
+				bottomPlaceholder.style.height = `${(allMessages.length - endIdx - 1) * messageHeightEstimate}px`;
+				messageList.appendChild(bottomPlaceholder);
+			}
+		}
+
+
+		
         async function handleLogin(e) {
             e.preventDefault();
             
@@ -793,52 +867,47 @@
             authError.classList.add('hidden');
         }
         
-        async function checkForNewMessages() {
-            if (!lastMessageId) return;
-            try {
-                // Only fetch messages newer than our last known message
-                const response = await fetch(
-                    `${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&after=${lastMessageId || ''}`,
-                    { credentials: 'include' }
-                );
-                
-                if (!response.ok) {
-                    console.error('Failed to check for new messages:', response.status);
-                    return;
-                }
+		async function checkForNewMessages() {
+			if (!lastMessageId) return;
+			
+			try {
+				const response = await fetch(
+					`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&after=${lastMessageId}`,
+					{ credentials: 'include' }
+				);
+				
+				if (!response.ok) {
+					console.error('Failed to check for new messages:', response.status);
+					return;
+				}
 
-                const data = await response.json();
-                
-                // If we have new messages, add them to the UI
-                if (data.messages && data.messages.length > 0) {
-                    // Update lastMessageId to the newest message
-                    lastMessageId = data.messages[data.messages.length - 1].id;
-                    
-                    // Check if we're scrolled to bottom
-                    const wasAtBottom = isScrollAtBottom();
-                    
-                    // Add messages to the UI
-                    data.messages.forEach(msg => {
-						if (!document.querySelector(`[data-message-id="${msg.id}"]`)) {
-							seenMessageIds.add(msg.id);
-							addMessageToChat(msg.username, msg.role, formatTime(msg.timestamp), msg.content, msg.pinned, msg.id);
-						}
-                    });
-                    
-                    // Show notification if not at bottom
-                    if (!wasAtBottom) {
-                        showNewMessageNotification(data.messages.length);
-                    }
-                }
-            } catch (err) {
-                console.error("Auto-refresh error:", err);
-            }
-        }
+				const data = await response.json();
+				
+				if (data.messages && data.messages.length > 0) {
+					// Update lastMessageId to the newest message
+					lastMessageId = data.messages[data.messages.length - 1].id;
+					
+					// Check if we're scrolled to bottom
+					const wasAtBottom = isScrollAtBottom();
+					
+					// Add messages to the UI
+					data.messages.forEach(msg => {
+						tryAppendMessageFromServer(msg);
+					});
+					
+					// Show notification if not at bottom
+					if (!wasAtBottom) {
+						showNewMessageNotification(data.messages.length);
+					}
+				}
+			} catch (err) {
+				console.error("Auto-refresh error:", err);
+			}
+		}
         
-        function isScrollAtBottom() {
-            const container = messagesContainer;
-            return container.scrollHeight - container.scrollTop - container.clientHeight < 50;
-        }
+		function isScrollAtBottom() {
+			return messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 50;
+		}
         
         function showNewMessageNotification(count) {
             newMessageText.textContent = count === 1 ? '1 new message' : `${count} new messages`;
@@ -852,23 +921,32 @@
             }, 5000);
         }
         
-        function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            newMessageNotification.classList.add('hidden');
-        }
+		function scrollToBottom() {
+			messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			updateVisibleMessages();
+		}
         
-        socket.addEventListener('message', (event) => {
-            const msg = JSON.parse(event.data);
+		socket.addEventListener('message', (event) => {
+			try {
+				const msg = JSON.parse(event.data);
 
-            if (msg.type === 'newMessage') {
-                const m = msg.data;
+				if (msg.type === 'newMessage') {
+					const m = msg.data;
 
-                // Only render if it belongs to the current channel
-                if (m.channel === currentChannel) {
-                    tryAppendMessageFromServer(m);
-                }
-            }
-        });
+					// Only render if it belongs to the current channel
+					if (m.channel === currentChannel) {
+						tryAppendMessageFromServer(m);
+						
+						// If we're not at the bottom, show notification
+						if (!isScrollAtBottom()) {
+							showNewMessageNotification(1);
+						}
+					}
+				}
+			} catch (e) {
+				console.error("Error handling WebSocket message:", e);
+			}
+		});
 
         async function handleLogout() {
             try {
@@ -1119,6 +1197,15 @@
                 }
                 
                 data.messages.forEach(tryAppendMessageFromServer);
+				        allMessages = data.messages;
+					visibleMessages = [];
+					
+					// Initialize virtual scroll
+					initVirtualScroll();
+					updateVisibleMessages();
+					
+					// Scroll to bottom for new channels
+					scrollToBottom();
                 
                 setTimeout(() => {
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1128,81 +1215,97 @@
             }
         }
         
-        async function handleScroll() {
-            if (channelLoading || channelOffset <= 0) return;
-            
-            if (messagesContainer.scrollTop < 100) {
-                channelLoading = true;
-                loadingMore.classList.remove('hidden');
-                
-                try {
-                    const newOffset = Math.max(0, channelOffset - PAGE_SIZE);
-                    const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${newOffset}&limit=${channelOffset - newOffset}`, {
-                        credentials: 'include'
-                    });
-                    
-                    if (!response.ok) throw new Error('Failed to load more messages');
-                    
-                    const data = await response.json();
-                    const fragment = document.createDocumentFragment();
-                    
-                    data.messages.forEach(msg => {
-                        if (!seenMessageIds.has(msg.id)) {
-                            seenMessageIds.add(msg.id);
-                            const el = createMessageElement(
-                                msg.username,
-                                msg.role,
-                                formatTime(msg.timestamp),
-                                msg.content,
-                                msg.pinned,
-                                msg.id
-                            );
-                            fragment.insertBefore(el, fragment.firstChild);
-                        }
-                    });
-                    
-                    messageList.insertBefore(fragment, messageList.firstChild);
-                    channelOffset = newOffset;
-                    
-                    // Maintain scroll position after loading more messages
-                    const firstMessage = messageList.firstElementChild;
-                    if (firstMessage) {
-                        const prevHeight = messagesContainer.scrollHeight;
-                        const prevScroll = messagesContainer.scrollTop;
-                        const newHeight = messagesContainer.scrollHeight;
-                        messagesContainer.scrollTop = prevScroll + (newHeight - prevHeight);
-                    }
-                } catch (error) {
-                    console.error('Error loading more messages:', error);
-                } finally {
-                    channelLoading = false;
-                    loadingMore.classList.add('hidden');
-                }
-            }
-        }
+		async function handleScroll() {
+			if (channelLoading || channelOffset <= 0) return;
+			
+			// Check if we're near the top (with some threshold)
+			if (messagesContainer.scrollTop < 100) {
+				channelLoading = true;
+				loadingMore.classList.remove('hidden');
+				
+				try {
+					const newOffset = Math.max(0, channelOffset - PAGE_SIZE);
+					
+					// Store current scroll state before loading
+					const firstVisibleMessageId = visibleMessages[0]?.id;
+					const scrollTopBefore = messagesContainer.scrollTop;
+					const firstChildHeight = messageList.firstChild?.offsetHeight || 0;
+					
+					const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${newOffset}&limit=${channelOffset - newOffset}`, {
+						credentials: 'include'
+					});
+					
+					if (!response.ok) throw new Error('Failed to load more messages');
+					
+					const data = await response.json();
+					
+					// Add new messages to the beginning of allMessages array
+					const newMessages = data.messages.filter(msg => !seenMessageIds.has(msg.id));
+					newMessages.forEach(msg => seenMessageIds.add(msg.id));
+					
+					// Prepend new messages to allMessages
+					allMessages = [...newMessages.reverse(), ...allMessages];
+					channelOffset = newOffset;
+					
+					// Update the visible messages
+					updateVisibleMessages();
+					
+					// Restore scroll position after update
+					if (firstVisibleMessageId) {
+						const newIndex = allMessages.findIndex(msg => msg.id === firstVisibleMessageId);
+						if (newIndex > -1) {
+							// Calculate new scroll position
+							const newScrollTop = scrollTopBefore + (messageList.firstChild?.offsetHeight || 0) - firstChildHeight;
+							messagesContainer.scrollTop = newScrollTop;
+						}
+					}
+					
+				} catch (error) {
+					console.error('Error loading more messages:', error);
+				} finally {
+					channelLoading = false;
+					loadingMore.classList.add('hidden');
+				}
+			}
+		}
+		
+		function updateMessageHeightEstimate() {
+			if (messageList.children.length > 0) {
+				const firstChild = messageList.children[0];
+				messageHeightEstimate = firstChild.offsetHeight;
+			}
+		}
         
         function formatTime(timestamp) {
             const date = new Date(timestamp);
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
         
-        function addMessageToChat(username, role, time, content, pinned, messageId) {
-            const messageElement = createMessageElement(username, role, time, content, pinned, messageId);
-            messageList.appendChild(messageElement);
-            
-            // Auto-scroll to bottom if we're near the bottom
-            const isNearBottom = isScrollAtBottom();
-            if (isNearBottom) {
-                setTimeout(() => {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }, 50);
-            }
-        }
+			function addMessageToChat(username, role, time, content, pinned, messageId) {
+				const newMsg = {
+					username,
+					role,
+					timestamp: new Date().toISOString(),
+					content,
+					pinned,
+					id: messageId
+				};
+				
+				allMessages.push(newMsg);
+				
+				// If we're near the bottom, auto-scroll
+				if (isScrollAtBottom()) {
+					scrollToBottom();
+				} else {
+					updateVisibleMessages();
+				}
+			}
+
         
         function createMessageElement(username, role, time, content, pinned, messageId) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
-            messageDiv.dataset.messageId = messageId;
+		 const messageDiv = document.createElement('div');
+		messageDiv.className = `message-enter mb-4 ${pinned ? 'pinned-message' : ''}`;
+		messageDiv.dataset.messageId = messageId;
             
             const roleInfo = getRoleInfo(role);
             
@@ -1427,9 +1530,6 @@ async function handleMessageInput(e) {
                 alert(error.message);
             }
         }
-				setInterval(() => {
-			seenMessageIds.clear();
-		}, 300000); // every 5 minutes
 
     </script>
 </body>
