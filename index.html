@@ -644,33 +644,40 @@
             return 3000; // default 3 seconds
         }
         
-        async function checkAutoLogin() {
-            try {
-                signingInNotification.classList.remove('hidden');
-                
-                const response = await fetch(`${API_BASE}/verify-token`, {
-                    credentials: 'include'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    currentUser = {
-                        username: data.username,
-                        role: data.role,
-                        token: data.token || null
-                    };
-                    
-                    successfulLogin();
-                } else {
-                    // If verification fails, clear any invalid token
-                    document.cookie = 'wb_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-                }
-            } catch (error) {
-                console.error('Auto-login error:', error);
-            } finally {
-                signingInNotification.classList.add('hidden');
-            }
-        }
+		async function checkAutoLogin() {
+			const signingInElement = document.getElementById('signingInNotification');
+			if (!signingInElement) {
+				console.error('Signing in notification element not found');
+				return;
+			}
+
+			try {
+				signingInElement.classList.remove('hidden');
+				
+				const response = await fetch(`${API_BASE}/verify-token`, {
+					credentials: 'include'
+				});
+				
+				if (response.ok) {
+					const data = await response.json();
+					currentUser = {
+						username: data.username,
+						role: data.role,
+						token: data.token || null
+					};
+					
+					await successfulLogin();
+				} else {
+					document.cookie = 'wb_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+				}
+			} catch (error) {
+				console.error('Auto-login error:', error);
+			} finally {
+				if (signingInElement) {
+					signingInElement.classList.add('hidden');
+				}
+			}
+		}
         
         function toggleAuthForms(e) {
             e.preventDefault();
@@ -846,26 +853,44 @@
             authError.classList.remove('hidden');
         }
         
-        function successfulLogin() {
-            authModal.classList.add('hidden');
-            appContainer.classList.remove('hidden');
-            updateUserDisplay();
-            loadChannels();
-            loadUsers();
-            loadMessagesForChannel();
-            messageInput.disabled = false;
-            
-            // Start polling for new messages
-            startMessagePolling();
-            
-            // Clear forms
-            document.getElementById('loginUsername').value = '';
-            document.getElementById('loginPassword').value = '';
-            document.getElementById('signupUsername').value = '';
-            document.getElementById('signupEmail').value = '';
-            document.getElementById('signupPassword').value = '';
-            authError.classList.add('hidden');
-        }
+		async function successfulLogin() {
+			try {
+				// Hide auth modal and show app
+				authModal.classList.add('hidden');
+				appContainer.classList.remove('hidden');
+				
+				// Update UI
+				updateUserDisplay();
+				
+				// Load initial data
+				await Promise.all([
+					loadChannels(),
+					loadUsers(),
+					loadMessagesForChannel()
+				]);
+				
+				// Enable message input
+				messageInput.disabled = false;
+				
+				// Start polling
+				startMessagePolling();
+				
+				// Clear forms
+				document.getElementById('loginUsername').value = '';
+				document.getElementById('loginPassword').value = '';
+				document.getElementById('signupUsername').value = '';
+				document.getElementById('signupEmail').value = '';
+				document.getElementById('signupPassword').value = '';
+				authError.classList.add('hidden');
+				
+			} catch (error) {
+				console.error('Login initialization failed:', error);
+				// Handle failed initialization
+				authModal.classList.remove('hidden');
+				appContainer.classList.add('hidden');
+				showAuthError('Failed to initialize chat. Please try again.');
+			}
+		}
         
 		async function checkForNewMessages() {
 			if (!lastMessageId) return;
@@ -1152,69 +1177,76 @@
             });
         }
         
-        async function loadMessagesForChannel() {
-            try {
-                channelOffset = 0;
-                channelTotal = 0;
-                messageList.innerHTML = '';
-                loadingMore.classList.add('hidden');
-                lastMessageId = null;
-                resetMessageState();
-                
-                // First get the total count
-                const countResponse = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=0&limit=1`, {
-                    credentials: 'include'
-                });
-                
-                if (!countResponse.ok) throw new Error('Failed to load messages');
-                
-                const countData = await countResponse.json();
-                channelTotal = countData.total;
-                
-                // Then load the most recent messages
-                const offset = Math.max(0, channelTotal - PAGE_SIZE);
-                channelOffset = offset;
-                
-                const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${offset}&limit=${PAGE_SIZE}`, {
-                    credentials: 'include'
-                });
-                
-                if (!response.ok) throw new Error('Failed to load messages');
-                
-                const data = await response.json();
-                
-                if (data.messages.length === 0) {
-                    const welcomeDiv = document.createElement('div');
-                    welcomeDiv.className = 'message-enter mb-8 text-center';
-                    welcomeDiv.innerHTML = `
-                        <div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
-                            <i class="fas fa-code text-3xl text-green-400"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to ${currentChannel}!</h3>
-                        <p class="text-gray-400">This is the start of the <span class="text-green-400">#${currentChannel}</span> channel.</p>
-                    `;
-                    messageList.appendChild(welcomeDiv);
-                }
-                
-                data.messages.forEach(tryAppendMessageFromServer);
-				        allMessages = data.messages;
-					visibleMessages = [];
-					
-					// Initialize virtual scroll
-					initVirtualScroll();
-					updateVisibleMessages();
-					
-					// Scroll to bottom for new channels
-					scrollToBottom();
-                
-                setTimeout(() => {
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                }, 100);
-            } catch (error) {
-                console.error('Error loading messages:', error);
-            }
-        }
-        
+		async function loadMessagesForChannel() {
+			const signingInElement = document.getElementById('signingInNotification');
+			
+			try {
+				if (signingInElement) signingInElement.classList.remove('hidden');
+				
+				channelOffset = 0;
+				channelTotal = 0;
+				allMessages = [];
+				loadingMore.classList.add('hidden');
+				lastMessageId = null;
+				resetMessageState();
+				
+				const countResponse = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=0&limit=1`, {
+					credentials: 'include'
+				});
+				
+				if (!countResponse.ok) throw new Error('Failed to load messages');
+				
+				const countData = await countResponse.json();
+				channelTotal = countData.total;
+				
+				const offset = Math.max(0, channelTotal - PAGE_SIZE);
+				channelOffset = offset;
+				
+				const response = await fetch(`${API_BASE}/messages?channel=${encodeURIComponent(currentChannel)}&offset=${offset}&limit=${PAGE_SIZE}`, {
+					credentials: 'include'
+				});
+				
+				if (!response.ok) throw new Error('Failed to load messages');
+				
+				const data = await response.json();
+				allMessages = data.messages;
+				
+				if (data.messages.length > 0) {
+					data.messages.forEach(msg => {
+						seenMessageIds.add(msg.id);
+						if (!lastMessageId || msg.id > lastMessageId) {
+							lastMessageId = msg.id;
+						}
+					});
+				} else {
+					// Show welcome message for empty channels
+					const welcomeDiv = document.createElement('div');
+					welcomeDiv.className = 'message-enter mb-8 text-center';
+					welcomeDiv.innerHTML = `
+						<div class="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-4 border-2 border-green-600">
+							<i class="fas fa-code text-3xl text-green-400"></i>
+						</div>
+						<h3 class="text-2xl font-bold text-green-400 mb-2">Welcome to ${currentChannel}!</h3>
+						<p class="text-gray-400">This is the start of the <span class="text-green-400">#${currentChannel}</span> channel.</p>
+					`;
+					messageList.appendChild(welcomeDiv);
+				}
+				
+				updateVisibleMessages();
+				scrollToBottom();
+				
+			} catch (error) {
+				console.error('Error loading messages:', error);
+				// Show error to user
+				const errorDiv = document.createElement('div');
+				errorDiv.className = 'message-enter mb-8 text-center text-red-400';
+				errorDiv.textContent = 'Failed to load messages. Please try again.';
+				messageList.appendChild(errorDiv);
+			} finally {
+				if (signingInElement) signingInElement.classList.add('hidden');
+			}
+		}
+				
 		async function handleScroll() {
 			if (channelLoading || channelOffset <= 0) return;
 			
